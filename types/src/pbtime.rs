@@ -74,12 +74,12 @@ impl TryFrom<Duration> for std::time::Duration {
     fn try_from(mut duration: Duration) -> Result<std::time::Duration, std::time::Duration> {
         duration.normalize();
         if duration.seconds >= 0 {
-            Ok(time::Duration::new(
+            Ok(std::time::Duration::new(
                 duration.seconds as u64,
                 duration.nanos as u32,
             ))
         } else {
-            Err(time::Duration::new(
+            Err(std::time::Duration::new(
                 (-duration.seconds) as u64,
                 (-duration.nanos) as u32,
             ))
@@ -218,4 +218,19 @@ impl<'de> Deserialize<'de> for Timestamp  {
         }
         deserializer.deserialize_str(TimestampVisitor)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::pbtime::*;
+    use chrono::{DateTime, Utc};
+
+    #[test]
+    fn timestamp_test() {
+        let ts = Timestamp::new(10, 10);
+        let datetime_utc: DateTime<Utc> = ts.to_datetime();
+
+        println!("{:?}", datetime_utc);
+    }
+
 }

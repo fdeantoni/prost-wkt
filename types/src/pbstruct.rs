@@ -303,3 +303,30 @@ impl<'de> Deserialize<'de> for Value {
         deserializer.deserialize_any(ValueVisitor)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::pbstruct::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn conversion_test() {
+        let number: Value = Value::from(10.0);
+        println!("Number: {:?}", number);
+        let null: Value = Value::null();
+        println!("Null: {:?}", null);
+        let string: Value = Value::from(String::from("Hello"));
+        println!("String: {:?}", string);
+        let list = vec![Value::null(), Value::from(100.0)];
+        let pb_list: Value = Value::from(list);
+        println!("List: {:?}", pb_list);
+        let mut map: HashMap<String, Value> = HashMap::new();
+        map.insert(String::from("number"), number);
+        map.insert(String::from("null"), null);
+        map.insert(String::from("string"), string);
+        map.insert(String::from("list"), pb_list);
+        let pb_struct: Value = Value::from(map);
+        println!("Struct: {:?}", pb_struct);
+    }
+
+}

@@ -7,6 +7,7 @@ fn main() {
 
     build(&dir, "pbtime");
     build(&dir, "pbstruct");
+    build(&dir, "pbany");
 }
 
 fn build(dir: &str, proto: &str) {

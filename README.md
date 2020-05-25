@@ -96,6 +96,24 @@ fn main() {
 }
 ```
 
+The above will generate the following stdout:
+
+```
+JSON:
+{
+  "requestId": "test1",
+  "payload": {
+    "@type": "type.googleapis.com/my.messages.Foo",
+    "data": "Hello World",
+    "timestamp": "2020-05-25T12:19:57.755998Z"
+  }
+}
+Unpacked: Foo { data: "Hello World", timestamp: Some(Timestamp { seconds: 1590409197, nanos: 755998000 }) }
+```
+
+Notice that the request message is properly serialized to JSON as per the [protobuf specification](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Any),
+and that it can be deserialized as well.
+
 See the `example` sub-project for a fully functioning example.
 
 ## License ##

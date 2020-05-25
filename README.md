@@ -10,13 +10,13 @@ implementation for the [Rust Language](https://www.rust-lang.org/) that generate
 
 It includes `prost-types` which gives basic support for protobuf Well-Known-Types (WKT). As support is basic, it
 does not include packing or unpacking of messages in the `Any` type, nor much support in the way of JSON serialization
-and deserializaton.
+and deserialization.
 
 This is a helper crate that can be used on top of prost to provide the above missing features.
 
 To use it, include this crate along with prost:
 
-```cargo
+```toml
 [dependencies]
 prost = { git = "https://github.com/fdeantoni/prost", branch = "meta" }
 prost-wkt = { git = "https://github.com/fdeantoni/prost-wkt" }

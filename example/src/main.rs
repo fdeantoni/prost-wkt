@@ -1,4 +1,4 @@
-use prost::*;
+use serde::{Deserialize, Serialize};
 use prost_wkt::*;
 use chrono::prelude::*;
 
@@ -17,10 +17,8 @@ fn main() {
     let json = serde_json::to_string_pretty(&request).unwrap();
     println!("JSON:\n{}", json);
 
-    let back: Foo = serde_json::from_str(&json).unwrap();
-    println!("Deserialized Foo: {:?}", &back);
-
-    let unpacked = any.unpack().unwrap();
-    let unpacked_foo = unpacked.downcast_ref::<Foo>().unwrap();
+    let back: Request = serde_json::from_str(&json).unwrap();
+    let unpacked: Box< dyn MessageSerde> = back.payload.unwrap().unpack().unwrap();
+    let unpacked_foo: &Foo = unpacked.downcast_ref::<Foo>().unwrap();
     println!("Unpacked: {:?}", unpacked_foo);
 }

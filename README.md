@@ -1,4 +1,8 @@
-# *PROST Well Known Types Serialization and Deserialization* #
+[![Documentation](https://docs.rs/prost-wkt/badge.svg)](https://docs.rs/prost-wkt/)
+[![Crate](https://img.shields.io/crates/v/prost-wkt.svg)](https://crates.io/crates/prost-wkt)
+[![Dependency Status](https://deps.rs/repo/github/fdeantoni/prost-wkt/status.svg)](https://deps.rs/repo/github/fdeantoni/prost-wkt)
+
+# *PROST Well Known Types JSON Serialization and Deserialization* #
 
 [Prost](https://github.com/danburkert/prost) is a [Protocol Buffers](https://developers.google.com/protocol-buffers/)
 implementation for the [Rust Language](https://www.rust-lang.org/) that generates simple, idiomatic Rust code from 

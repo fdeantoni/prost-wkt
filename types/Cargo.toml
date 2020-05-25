@@ -2,9 +2,14 @@
 name = "prost-wkt"
 version = "0.1.0"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/fdeantoni/prost-wkt"
+description = "Helper crate for prost to allow JSON serialization and deserialization of Well Known Types."
+readme = "../README.md"
+documentation = "https://docs.rs/prost-wkt"
+keywords = ["protobuf", "serde", "json"]
+categories = ["encoding"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 doctest = false

@@ -7,7 +7,9 @@ use serde_json::json;
 use prost::{MessageProto, Message, DecodeError};
 
 impl Any {
-    // A type_url can take the format of `type.googleapis.com/package_name.struct_name`
+    /// Packs a message into an `Any` containing a `type_url` which will take the format
+    /// of `type.googleapis.com/package_name.struct_name`, and a value containing the
+    /// encoded message.
     pub fn pack<T>(message: T) -> Self
         where
             T: Message + MessageProto + Default
@@ -23,10 +25,27 @@ impl Any {
         }
     }
 
+    /// Unpacks the contents of the `Any` into the provided message type. Example usage:
+    ///
+    /// ```rust
+    /// # use prost_wkt::*;
+    /// # let foo: Foo = Foo::default();
+    /// # let any: Any = Any::pack(foo);
+    /// let back: Foo = any.unpack_as(Foo::default()).unwrap();
+    /// ```
     pub fn unpack_as<T: Message>(self, mut target: T) -> Result<T, DecodeError> {
         target.merge(self.value.as_slice()).map(|_| target)
     }
 
+    /// Unpacks the contents of the `Any` into the `MessageSerde` trait object. Example
+    /// usage:
+    ///
+    /// ```rust
+    /// # use prost_wkt::*;
+    /// # let foo: Foo = Foo::default();
+    /// # let any: Any = Any::pack(foo);
+    /// let back: Box<dyn MessageSerde> = any.unpack().unwrap();
+    /// ```
     pub fn unpack(self) -> Result<Box<dyn super::MessageSerde>, DecodeError> {
         let type_url = self.type_url.clone();
         let empty = json!({

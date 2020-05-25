@@ -1,5 +1,3 @@
-[![Documentation](https://docs.rs/prost-wkt/badge.svg)](https://docs.rs/prost-wkt/)
-[![Crate](https://img.shields.io/crates/v/prost-wkt.svg)](https://crates.io/crates/prost-wkt)
 [![Dependency Status](https://deps.rs/repo/github/fdeantoni/prost-wkt/status.svg)](https://deps.rs/repo/github/fdeantoni/prost-wkt)
 
 # *PROST Well Known Types JSON Serialization and Deserialization* #

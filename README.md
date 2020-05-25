@@ -1,5 +1,3 @@
-[![Dependency Status](https://deps.rs/repo/github/fdeantoni/prost-wkt/status.svg)](https://deps.rs/repo/github/fdeantoni/prost-wkt)
-
 # *PROST Well Known Types JSON Serialization and Deserialization* #
 
 [Prost](https://github.com/danburkert/prost) is a [Protocol Buffers](https://developers.google.com/protocol-buffers/)
@@ -72,7 +70,7 @@ After generating the rust structs for the above using `prost-build` with the abo
 to do the following:
 
 ```rust
-use prost::*;
+use serde::{Deserialize, Serialize};
 use prost_wkt::*;
 use chrono::prelude::*;
 

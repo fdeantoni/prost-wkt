@@ -1,5 +1,5 @@
 [package]
-name = "prost-wkt-types"
+name = "prost-wkt"
 version = "0.1.0"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 edition = "2018"
@@ -17,6 +17,7 @@ serde_derive = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 mopa = "0.2.2"
 typetag = "0.1"
+prost-wkt-derive = { path = "../derive" }
 
 [build-dependencies]
 prost-build = { git = "https://github.com/fdeantoni/prost", branch = "meta" }

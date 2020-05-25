@@ -12,6 +12,11 @@ extern crate mopa;
 
 pub use typetag;
 
+#[allow(unused_imports)]
+#[macro_use]
+extern crate prost_wkt_derive;
+#[doc(hidden)]
+pub use prost_wkt_derive::*;
 
 #[typetag::serde(tag = "@type")]
 pub trait MessageSerde: prost::Message + prost::MessageProto + mopa::Any {

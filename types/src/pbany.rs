@@ -4,7 +4,7 @@ use serde::de::{Deserialize, Deserializer};
 include!(concat!(env!("OUT_DIR"), "/pbany/google.protobuf.rs"));
 
 use serde_json::json;
-use prost::{MessageProto, Message, DecodeError};
+use prost::{MessageDescriptor, Message, DecodeError};
 
 impl Any {
     /// Packs a message into an `Any` containing a `type_url` which will take the format
@@ -12,9 +12,9 @@ impl Any {
     /// encoded message.
     pub fn pack<T>(message: T) -> Self
         where
-            T: Message + MessageProto + Default
+            T: Message + MessageDescriptor + Default
     {
-        let type_url= MessageProto::type_url(&message).to_string();
+        let type_url= MessageDescriptor::type_url(&message).to_string();
         // Serialize the message into a value
         let mut buf = Vec::new();
         buf.reserve(message.encoded_len());

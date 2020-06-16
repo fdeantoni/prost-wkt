@@ -3,11 +3,10 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use anyhow::{bail, Error};
-use syn::{DeriveInput, Ident, Meta, Attribute, MetaList, NestedMeta};
+use syn::{DeriveInput, Ident, Meta, Attribute, MetaList, NestedMeta, Data};
 use quote::quote;
 
-fn try_message_serde(input: TokenStream) -> Result<TokenStream, Error> {
-    let input: DeriveInput = syn::parse(input)?;
+fn try_message_serde(input: DeriveInput) -> Result<TokenStream, Error> {
 
     let ident = input.ident;
 
@@ -80,7 +79,11 @@ fn prost_attrs(attrs: Vec<Attribute>) -> Result<Vec<Meta>, Error> {
 
 #[proc_macro_derive(MessageSerde, attributes(prost))]
 pub fn message_serde(input: TokenStream) -> TokenStream {
-    try_message_serde(input).unwrap()
+    let di: DeriveInput = syn::parse(input.clone()).unwrap();
+    match di.data {
+        Data::Struct(_) => try_message_serde(di).unwrap(),
+        _ => input, // not struct so do not process further
+    }
 }
 
 

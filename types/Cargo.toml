@@ -27,3 +27,5 @@ prost-wkt-derive = { path = "../derive" }
 [build-dependencies]
 prost-build = { git = "https://github.com/fdeantoni/prost", branch = "meta" }
 
+[dev-dependencies]
+proptest = "0.9"

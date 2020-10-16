@@ -31,7 +31,7 @@ fn try_message_serde(input: DeriveInput) -> Result<TokenStream, Error> {
     let dummy_const = Ident::new(&format!("IMPL_MESSAGE_SERDE_FOR_{}", ident), Span::call_site());
     let serde = quote! {
             const #dummy_const: () = {
-                use ::prost_wkt::*;
+                use ::prost_wkt::typetag;
                 #[typetag::serde(name=#type_url)]
                 impl ::prost_wkt::MessageSerde for #ident {
                     fn new_instance(&self, data: Vec<u8>) -> Result<Box<dyn ::prost_wkt::MessageSerde>, ::prost::DecodeError> {

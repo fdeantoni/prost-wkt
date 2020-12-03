@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use prost_wkt::*;
 
 #[derive(Clone, PartialEq, ::prost::Message, ::prost_wkt::MessageSerde, Serialize, Deserialize)]
@@ -19,13 +20,28 @@ pub struct Foo {
     pub payload: ::std::option::Option<::prost_wkt::Any>,
 }
 
+fn create_struct() -> Value {
+    let number: Value = Value::from(10.0);
+    let null: Value = Value::null();
+    let string: Value = Value::from(String::from("Hello"));
+    let list = vec![Value::null(), Value::from(100.0)];
+    let pb_list: Value = Value::from(list);
+    let mut map: HashMap<String, Value> = HashMap::new();
+    map.insert(String::from("number"), number);
+    map.insert(String::from("null"), null);
+    map.insert(String::from("string"), string);
+    map.insert(String::from("list"), pb_list);
+    Value::from(map)
+}
+
 #[test]
 fn test_any_serialization() {
+    
     let inner = Foo {
         string: String::from("inner"),
         timestamp: None,
         boolean: false,
-        data: None,
+        data: Some(create_struct()),
         list: vec!["een".to_string(), "twee".to_string()],
         payload: None
     };
@@ -38,7 +54,7 @@ fn test_any_serialization() {
         list: vec!["one".to_string(), "two".to_string()],
         payload: Some(prost_wkt::Any::pack(inner))
     };
-    println!("Serialized to string: {}", serde_json::to_string(&msg).unwrap());
+    println!("Serialized to string: {}", serde_json::to_string_pretty(&msg).unwrap());
     let erased = &msg as &dyn MessageSerde;
     let json = serde_json::to_string(erased).unwrap();
     println!("Erased json: {}", json);

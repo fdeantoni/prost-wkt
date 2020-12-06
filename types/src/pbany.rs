@@ -6,6 +6,43 @@ include!(concat!(env!("OUT_DIR"), "/pbany/google.protobuf.rs"));
 use serde_json::json;
 use prost::{MessageDescriptor, Message, DecodeError};
 
+use std::borrow::Cow;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AnyError {
+    description: Cow<'static, str>,
+}
+
+impl AnyError {
+    pub fn new<S>(description: S) -> Self
+        where
+            S: Into<Cow<'static, str>>,
+    {
+        AnyError {
+            description: description.into(),
+        }
+    }
+}
+
+impl std::error::Error for AnyError {
+    fn description(&self) -> &str {
+        &self.description
+    }
+}
+
+impl std::fmt::Display for AnyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("failed to convert Value: ")?;
+        f.write_str(&self.description)
+    }
+}
+
+impl From<prost::DecodeError> for AnyError {
+    fn from(error: DecodeError) -> Self {
+        AnyError::new(format!("Error decoding message: {:?}", error))
+    }
+}
+
 impl Any {
     /// Packs a message into an `Any` containing a `type_url` which will take the format
     /// of `type.googleapis.com/package_name.struct_name`, and a value containing the
@@ -33,8 +70,9 @@ impl Any {
     /// # let any: Any = Any::pack(foo);
     /// let back: Foo = any.unpack_as(Foo::default()).unwrap();
     /// ```
-    pub fn unpack_as<T: Message>(self, mut target: T) -> Result<T, DecodeError> {
-        target.merge(self.value.as_slice()).map(|_| target)
+    pub fn unpack_as<T: Message>(self, mut target: T) -> Result<T, AnyError> {
+        let instance = target.merge(self.value.as_slice()).map(|_| target)?;
+        Ok(instance)
     }
 
     /// Unpacks the contents of the `Any` into the `MessageSerde` trait object. Example
@@ -46,7 +84,7 @@ impl Any {
     /// # let any: Any = Any::pack(foo);
     /// let back: Box<dyn MessageSerde> = any.unpack().unwrap();
     /// ```
-    pub fn unpack(self) -> Result<Box<dyn super::MessageSerde>, DecodeError> {
+    pub fn unpack(self) -> Result<Box<dyn super::MessageSerde>, AnyError> {
         let type_url = self.type_url.clone();
         let empty = json!({
             "@type": &type_url,
@@ -59,9 +97,10 @@ impl Any {
                     type_url,
                     error.to_string()
                 );
-                prost::DecodeError::new(description)
+                AnyError::new(description)
             })?;
-        template.new_instance(self.value.clone())
+        let instance = template.new_instance(self.value.clone())?;
+        Ok(instance)
     }
 }
 

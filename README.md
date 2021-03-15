@@ -28,7 +28,7 @@ prost-build = { git = "https://github.com/fdeantoni/prost", branch = "meta" }
 *Note*: the above uses a forked repo of prost with a pull request that `prost-wkt` requires. If this 
 pull request gets accepted, the prost repo can be used instead.
 
-In your `bulid.rs`, make sure to add the following options:
+In your `build.rs`, make sure to add the following options:
 ```rust
 fn main() {
     let mut prost_build = prost_build::Config::new();

@@ -1,4 +1,5 @@
 # *PROST Well Known Types JSON Serialization and Deserialization* #
+[![crates.io](https://buildstats.info/crate/prost-wkt-types)](https://crates.io/crates/prost-wkt-types) [![build](https://github.com/fdeantoni/prost-wkt/actions/workflows/rust.yml/badge.svg)](https://github.com/fdeantoni/prost-wkt/actions/workflows/rust.yml)
 
 [Prost](https://github.com/danburkert/prost) is a [Protocol Buffers](https://developers.google.com/protocol-buffers/)
 implementation for the [Rust Language](https://www.rust-lang.org/) that generates simple, idiomatic Rust code from

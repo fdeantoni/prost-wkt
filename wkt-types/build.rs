@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::create_dir_all;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use prost::Message;
 use prost_types::FileDescriptorSet;
@@ -13,7 +13,7 @@ fn main() {
     build(&dir, "pbany");
 }
 
-fn build(dir: &PathBuf, proto: &str) {
+fn build(dir: &Path, proto: &str) {
     let out = dir.join(proto);
     create_dir_all(&out).unwrap();
     let source = format!("proto/{}.proto", proto);

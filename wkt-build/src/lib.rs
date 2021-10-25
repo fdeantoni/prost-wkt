@@ -26,7 +26,7 @@ pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
 
             let type_url = format!("type.googleapis.com/{}.{}", package_name, message_name);
 
-            gen_trait_impl(&mut rust_file, &package_name, &message_name, &type_url);
+            gen_trait_impl(&mut rust_file, package_name, message_name, &type_url);
         }
     }
 }

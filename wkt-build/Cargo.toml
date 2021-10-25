@@ -1,20 +1,17 @@
 [package]
-name = "prost-wkt-derive"
-version = "0.1.0"
+name = "prost-wkt-build"
+version = "0.2.0"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fdeantoni/prost-wkt"
 description = "Helper crate for prost to allow JSON serialization and deserialization of Well Known Types."
 readme = "README.md"
-documentation = "https://docs.rs/prost-wkt-derive"
+documentation = "https://docs.rs/prost-wkt-build"
 edition = "2018"
 
-[lib]
-proc_macro = true
-
 [dependencies]
-anyhow = "1"
-itertools = "0.10"
-proc-macro2 = "1"
-quote = "1"
-syn = { version = "1", features = [ "extra-traits" ] }
+prost = "0.9.0"
+prost-types = "0.9.0"
+prost-build = "0.9"
+quote = "1.0"
+convert_case = "0.4"

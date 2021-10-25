@@ -13,30 +13,56 @@ use serde::de::{self, Deserialize, Deserializer, Visitor};
 include!(concat!(env!("OUT_DIR"), "/pbtime/google.protobuf.rs"));
 
 /*
- * From prost-types: https://github.com/danburkert/prost/blob/6113789f70b69709820becba4242824b4fb3ffec/prost-types/src/lib.rs
+ * From prost-types: https://github.com/tokio-rs/prost/blob/v0.9.0/prost-types/src/lib.rs
  */
 
 const NANOS_PER_SECOND: i32 = 1_000_000_000;
+const NANOS_MAX: i32 = NANOS_PER_SECOND - 1;
 
 impl Duration {
     /// Normalizes the duration to a canonical format.
     ///
     /// Based on [`google::protobuf::util::CreateNormalized`][1].
     /// [1]: https://github.com/google/protobuf/blob/v3.3.2/src/google/protobuf/util/time_util.cc#L79-L100
-    fn normalize(&mut self) {
+    pub fn normalize(&mut self) {
         // Make sure nanos is in the range.
         if self.nanos <= -NANOS_PER_SECOND || self.nanos >= NANOS_PER_SECOND {
-            self.seconds += (self.nanos / NANOS_PER_SECOND) as i64;
-            self.nanos %= NANOS_PER_SECOND;
+            if let Some(seconds) = self
+                .seconds
+                .checked_add((self.nanos / NANOS_PER_SECOND) as i64)
+            {
+                self.seconds = seconds;
+                self.nanos %= NANOS_PER_SECOND;
+            } else if self.nanos < 0 {
+                // Negative overflow! Set to the least normal value.
+                self.seconds = i64::MIN;
+                self.nanos = -NANOS_MAX;
+            } else {
+                // Positive overflow! Set to the greatest normal value.
+                self.seconds = i64::MAX;
+                self.nanos = NANOS_MAX;
+            }
         }
 
         // nanos should have the same sign as seconds.
         if self.seconds < 0 && self.nanos > 0 {
-            self.seconds += 1;
-            self.nanos -= NANOS_PER_SECOND;
+            if let Some(seconds) = self.seconds.checked_add(1) {
+                self.seconds = seconds;
+                self.nanos -= NANOS_PER_SECOND;
+            } else {
+                // Positive overflow! Set to the greatest normal value.
+                debug_assert_eq!(self.seconds, i64::MAX);
+                self.nanos = NANOS_MAX;
+            }
         } else if self.seconds > 0 && self.nanos < 0 {
-            self.seconds -= 1;
-            self.nanos += NANOS_PER_SECOND;
+            if let Some(seconds) = self.seconds.checked_sub(1) {
+                self.seconds = seconds;
+                self.nanos += NANOS_PER_SECOND;
+            } else {
+                // Negative overflow! Set to the least normal value.
+                debug_assert_eq!(self.seconds, i64::MIN);
+                self.nanos = -NANOS_MAX;
+            }
         }
         // TODO: should this be checked?
         // debug_assert!(self.seconds >= -315_576_000_000 && self.seconds <= 315_576_000_000,
@@ -45,8 +71,8 @@ impl Duration {
 }
 
 /// Converts a `std::time::Duration` to a `Duration`.
-impl From<std::time::Duration> for Duration {
-    fn from(duration: std::time::Duration) -> Duration {
+impl From<time::Duration> for Duration {
+    fn from(duration: time::Duration) -> Duration {
         let seconds = duration.as_secs();
         let seconds = if seconds > i64::MAX as u64 {
             i64::MAX
@@ -65,20 +91,20 @@ impl From<std::time::Duration> for Duration {
     }
 }
 
-impl TryFrom<Duration> for std::time::Duration {
-    type Error = std::time::Duration;
+impl TryFrom<Duration> for time::Duration {
+    type Error = time::Duration;
 
     /// Converts a `Duration` to a result containing a positive (`Ok`) or negative (`Err`)
     /// `std::time::Duration`.
-    fn try_from(mut duration: Duration) -> Result<std::time::Duration, std::time::Duration> {
+    fn try_from(mut duration: Duration) -> Result<time::Duration, time::Duration> {
         duration.normalize();
         if duration.seconds >= 0 {
-            Ok(std::time::Duration::new(
+            Ok(time::Duration::new(
                 duration.seconds as u64,
                 duration.nanos as u32,
             ))
         } else {
-            Err(std::time::Duration::new(
+            Err(time::Duration::new(
                 (-duration.seconds) as u64,
                 (-duration.nanos) as u32,
             ))
@@ -91,41 +117,60 @@ impl Timestamp {
     ///
     /// Based on [`google::protobuf::util::CreateNormalized`][1].
     /// [1]: https://github.com/google/protobuf/blob/v3.3.2/src/google/protobuf/util/time_util.cc#L59-L77
-    fn normalize(&mut self) {
+    #[cfg(feature = "std")]
+    pub fn normalize(&mut self) {
         // Make sure nanos is in the range.
         if self.nanos <= -NANOS_PER_SECOND || self.nanos >= NANOS_PER_SECOND {
-            self.seconds += (self.nanos / NANOS_PER_SECOND) as i64;
-            self.nanos %= NANOS_PER_SECOND;
+            if let Some(seconds) = self
+                .seconds
+                .checked_add((self.nanos / NANOS_PER_SECOND) as i64)
+            {
+                self.seconds = seconds;
+                self.nanos %= NANOS_PER_SECOND;
+            } else if self.nanos < 0 {
+                // Negative overflow! Set to the earliest normal value.
+                self.seconds = i64::MIN;
+                self.nanos = 0;
+            } else {
+                // Positive overflow! Set to the latest normal value.
+                self.seconds = i64::MAX;
+                self.nanos = 999_999_999;
+            }
         }
 
         // For Timestamp nanos should be in the range [0, 999999999].
         if self.nanos < 0 {
-            self.seconds -= 1;
-            self.nanos += NANOS_PER_SECOND;
+            if let Some(seconds) = self.seconds.checked_sub(1) {
+                self.seconds = seconds;
+                self.nanos += NANOS_PER_SECOND;
+            } else {
+                // Negative overflow! Set to the earliest normal value.
+                debug_assert_eq!(self.seconds, i64::MIN);
+                self.nanos = 0;
+            }
         }
 
         // TODO: should this be checked?
         // debug_assert!(self.seconds >= -62_135_596_800 && self.seconds <= 253_402_300_799,
         //               "invalid timestamp: {:?}", self);
     }
-
-    pub fn new(seconds: i64, nanos: i32) -> Self {
-        let mut ts = Timestamp {
-            seconds,
-            nanos
-        };
-        ts.normalize();
-        ts
-    }
-
-    pub fn to_datetime(&self) -> DateTime<Utc> {
-        let dt = NaiveDateTime::from_timestamp(self.seconds, self.nanos as u32);
-        DateTime::from_utc(dt, Utc)
-    }
-
 }
 
-/// Converts a `std::time::SystemTime` to a `Timestamp`.
+/// Implements the unstable/naive version of `Eq`: a basic equality check on the internal fields of the `Timestamp`.
+/// This implies that `normalized_ts != non_normalized_ts` even if `normalized_ts == non_normalized_ts.normalized()`.
+#[cfg(feature = "std")]
+impl Eq for Timestamp {}
+
+#[cfg(feature = "std")]
+#[allow(clippy::derive_hash_xor_eq)] // Derived logic is correct: comparing the 2 feilds for equality
+impl std::hash::Hash for Timestamp {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.seconds.hash(state);
+        self.nanos.hash(state);
+    }
+}
+
+#[cfg(feature = "std")]
 impl From<std::time::SystemTime> for Timestamp {
     fn from(system_time: std::time::SystemTime) -> Timestamp {
         let (seconds, nanos) = match system_time.duration_since(std::time::UNIX_EPOCH) {
@@ -148,18 +193,59 @@ impl From<std::time::SystemTime> for Timestamp {
     }
 }
 
-impl From<Timestamp> for std::time::SystemTime {
-    fn from(mut timestamp: Timestamp) -> std::time::SystemTime {
-        timestamp.normalize();
-        let system_time = if timestamp.seconds >= 0 {
-            std::time::UNIX_EPOCH + time::Duration::from_secs(timestamp.seconds as u64)
-        } else {
-            std::time::UNIX_EPOCH - time::Duration::from_secs((-timestamp.seconds) as u64)
-        };
+/// Indicates that a [`Timestamp`] could not be converted to
+/// [`SystemTime`][std::time::SystemTime] because it is out of range.
+///
+/// The range of times that can be represented by `SystemTime` depends on the platform.
+/// All `Timestamp`s are likely representable on 64-bit Unix-like platforms, but
+/// other platforms, such as Windows and 32-bit Linux, may not be able to represent
+/// the full range of `Timestamp`s.
+#[cfg(feature = "std")]
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct TimestampOutOfSystemRangeError {
+    pub timestamp: Timestamp,
+}
 
-        system_time + time::Duration::from_nanos(timestamp.nanos as u64)
+#[cfg(feature = "std")]
+impl core::fmt::Display for TimestampOutOfSystemRangeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(
+            f,
+            "{:?} is not representable as a `SystemTime` because it is out of range",
+            self
+        )
     }
 }
+
+#[cfg(feature = "std")]
+impl std::error::Error for TimestampOutOfSystemRangeError {}
+
+#[cfg(feature = "std")]
+impl TryFrom<Timestamp> for std::time::SystemTime {
+    type Error = TimestampOutOfSystemRangeError;
+
+    fn try_from(mut timestamp: Timestamp) -> Result<std::time::SystemTime, Self::Error> {
+        let orig_timestamp = timestamp.clone();
+        timestamp.normalize();
+
+        let system_time = if timestamp.seconds >= 0 {
+            std::time::UNIX_EPOCH.checked_add(time::Duration::from_secs(timestamp.seconds as u64))
+        } else {
+            std::time::UNIX_EPOCH
+                .checked_sub(time::Duration::from_secs((-timestamp.seconds) as u64))
+        };
+
+        let system_time = system_time.and_then(|system_time| {
+            system_time.checked_add(time::Duration::from_nanos(timestamp.nanos as u64))
+        });
+
+        system_time.ok_or(TimestampOutOfSystemRangeError {
+            timestamp: orig_timestamp,
+        })
+    }
+}
+
 
 /// Converts chrono's `NaiveDateTime` to `Timestamp`..
 impl From<NaiveDateTime> for Timestamp {
@@ -181,6 +267,14 @@ impl From<DateTime<Utc>> for Timestamp {
     }
 }
 
+/// Converts proto timestamp to chrono's DateTime<Utc>
+impl Into<DateTime<Utc>> for Timestamp {
+    fn into(self) -> DateTime<Utc> {
+        let dt = NaiveDateTime::from_timestamp(self.seconds, self.nanos as u32);
+        DateTime::from_utc(dt, Utc)
+    }
+}
+
 impl Serialize for Timestamp {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
         S: Serializer {
@@ -189,7 +283,7 @@ impl Serialize for Timestamp {
             nanos: self.nanos
         };
         ts.normalize();
-        let dt = ts.to_datetime();
+        let dt: DateTime<Utc> = ts.into();
         serializer.serialize_str(format!("{:?}", dt).as_str())
     }
 }
@@ -223,96 +317,16 @@ impl<'de> Deserialize<'de> for Timestamp  {
 #[cfg(test)]
 mod tests {
 
-    use std::time::{Duration, SystemTime, UNIX_EPOCH};
-    use proptest::prelude::*;
-
     use crate::pbtime::*;
     use chrono::{DateTime, Utc};
 
-    /*
-     * First three tests from prost-types: https://github.com/danburkert/prost/blob/6113789f70b69709820becba4242824b4fb3ffec/prost-types/src/lib.rs
-     */
-
-    proptest! {
-        #[test]
-        fn check_system_time_roundtrip(
-            system_time in SystemTime::arbitrary(),
-        ) {
-            prop_assert_eq!(SystemTime::from(Timestamp::from(system_time)), system_time);
-        }
-    }
-
-    #[test]
-    fn check_timestamp_negative_seconds() {
-        // Representative tests for the case of timestamps before the UTC Epoch time:
-        // validate the expected behaviour that "negative second values with fractions
-        // must still have non-negative nanos values that count forward in time"
-        // https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Timestamp
-        //
-        // To ensure cross-platform compatibility, all nanosecond values in these
-        // tests are in minimum 100 ns increments.  This does not affect the general
-        // character of the behaviour being tested, but ensures that the tests are
-        // valid for both POSIX (1 ns precision) and Windows (100 ns precision).
-        assert_eq!(
-            Timestamp::from(UNIX_EPOCH - Duration::new(1_001, 0)),
-            Timestamp {
-                seconds: -1_001,
-                nanos: 0
-            }
-        );
-        assert_eq!(
-            Timestamp::from(UNIX_EPOCH - Duration::new(0, 999_999_900)),
-            Timestamp {
-                seconds: -1,
-                nanos: 100
-            }
-        );
-        assert_eq!(
-            Timestamp::from(UNIX_EPOCH - Duration::new(2_001_234, 12_300)),
-            Timestamp {
-                seconds: -2_001_235,
-                nanos: 999_987_700
-            }
-        );
-        assert_eq!(
-            Timestamp::from(UNIX_EPOCH - Duration::new(768, 65_432_100)),
-            Timestamp {
-                seconds: -769,
-                nanos: 934_567_900
-            }
-        );
-    }
-
-    #[test]
-    fn check_timestamp_negative_seconds_1ns() {
-        // UNIX-only test cases with 1 ns precision
-        assert_eq!(
-            Timestamp::from(UNIX_EPOCH - Duration::new(0, 999_999_999)),
-            Timestamp {
-                seconds: -1,
-                nanos: 1
-            }
-        );
-        assert_eq!(
-            Timestamp::from(UNIX_EPOCH - Duration::new(1_234_567, 123)),
-            Timestamp {
-                seconds: -1_234_568,
-                nanos: 999_999_877
-            }
-        );
-        assert_eq!(
-            Timestamp::from(UNIX_EPOCH - Duration::new(890, 987_654_321)),
-            Timestamp {
-                seconds: -891,
-                nanos: 12_345_679
-            }
-        );
-    }
-
     #[test]
     fn timestamp_test() {
-        let ts = Timestamp::new(10, 10);
-        let datetime_utc: DateTime<Utc> = ts.to_datetime();
+        let ts = Timestamp {
+            seconds: 10,
+            nanos: 10
+        };
+        let datetime_utc: DateTime<Utc> = ts.into();
 
         println!("{:?}", datetime_utc);
     }

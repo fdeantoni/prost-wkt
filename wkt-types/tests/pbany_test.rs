@@ -1,23 +1,54 @@
+use prost::{DecodeError, Message};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use prost_wkt::*;
+use prost_wkt_types::*;
 
-#[derive(Clone, PartialEq, ::prost::Message, ::prost_wkt::MessageSerde, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
 #[prost(package="any.test")]
 #[serde(default, rename_all="camelCase")]
 pub struct Foo {
     #[prost(string, tag="1")]
     pub string: std::string::String,
     #[prost(message, optional, tag="2")]
-    pub timestamp: ::std::option::Option<::prost_wkt::Timestamp>,
+    pub timestamp: ::std::option::Option<::prost_wkt_types::Timestamp>,
     #[prost(bool, tag="3")]
     pub boolean: bool,
     #[prost(message, optional, tag="4")]
-    pub data: ::std::option::Option<::prost_wkt::Value>,
+    pub data: ::std::option::Option<::prost_wkt_types::Value>,
     #[prost(string, repeated, tag="5")]
     pub list: ::std::vec::Vec<std::string::String>,
     #[prost(message, optional, tag="6")]
-    pub payload: ::std::option::Option<::prost_wkt::Any>,
+    pub payload: ::std::option::Option<::prost_wkt_types::Any>,
+}
+
+#[typetag::serde(name="type.googleapis.com/any.test.Foo")]
+impl prost_wkt::MessageSerde for Foo {
+    fn message_name(&self) -> &'static str {
+        "Foo"
+    }
+
+    fn package_name(&self) -> &'static str {
+        "any.test"
+    }
+
+    fn type_url(&self) -> &'static str {
+        "type.googleapis.com/any.test.Foo"
+    }
+
+    fn new_instance(&self, data: Vec<u8>) -> Result<Box<dyn MessageSerde>, DecodeError> {
+        let mut target = Self::default();
+        Message::merge(&mut target, data.as_slice())?;
+        let erased: Box<dyn MessageSerde> = Box::new(target);
+        Ok(erased)
+    }
+
+    fn encoded(&self) -> Vec<u8> {
+        let mut buf = Vec::new();
+        buf.reserve(Message::encoded_len(self));
+        Message::encode(self, &mut buf).unwrap();
+        buf
+    }
 }
 
 fn create_struct() -> Value {
@@ -36,7 +67,7 @@ fn create_struct() -> Value {
 
 #[test]
 fn test_any_serialization() {
-    
+
     let inner = Foo {
         string: String::from("inner"),
         timestamp: None,
@@ -48,11 +79,11 @@ fn test_any_serialization() {
 
     let msg = Foo {
         string: String::from("hello"),
-        timestamp: Some(prost_wkt::Timestamp::new(99, 42)),
+        timestamp: Some(prost_wkt_types::Timestamp { seconds: 99, nanos: 42 }),
         boolean: true,
-        data: Some(prost_wkt::Value::from("world".to_string())),
+        data: Some(prost_wkt_types::Value::from("world".to_string())),
         list: vec!["one".to_string(), "two".to_string()],
-        payload: Some(prost_wkt::Any::pack(inner))
+        payload: Some(prost_wkt_types::Any::pack(inner))
     };
     println!("Serialized to string: {}", serde_json::to_string_pretty(&msg).unwrap());
     let erased = &msg as &dyn MessageSerde;
@@ -96,11 +127,11 @@ fn test_any_serialize_deserialize() {
 
     let original = Foo {
         string: String::from("original"),
-        timestamp: Some(prost_wkt::Timestamp::new(99, 42)),
+        timestamp: Some(prost_wkt_types::Timestamp { seconds: 99, nanos: 42 }),
         boolean: true,
-        data: Some(prost_wkt::Value::from("world".to_string())),
+        data: Some(prost_wkt_types::Value::from("world".to_string())),
         list: vec!["one".to_string(), "two".to_string()],
-        payload: Some(prost_wkt::Any::pack(inner))
+        payload: Some(prost_wkt_types::Any::pack(inner))
     };
 
     let json = serde_json::to_string(&original).unwrap();
@@ -120,7 +151,7 @@ fn test_any_unpack() {
         list: vec!["een".to_string(), "twee".to_string()],
         payload: None
     };
-    let any = prost_wkt::Any::pack(payload);
+    let any = prost_wkt_types::Any::pack(payload);
     let unpacked = any.unpack().unwrap();
     let foo = unpacked.downcast_ref::<Foo>().unwrap();
     println!("Unpacked: {:?}", foo);

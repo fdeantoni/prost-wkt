@@ -85,8 +85,9 @@ to do the following:
 
 ```rust
 use serde::{Deserialize, Serialize};
-use prost_wkt_types::*;
 use chrono::prelude::*;
+
+use prost_wkt_types::*;
 
 include!(concat!(env!("OUT_DIR"), "/my.pkg.rs"));
 

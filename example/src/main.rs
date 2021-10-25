@@ -1,6 +1,7 @@
-use prost_wkt::MessageSerde;
 use serde::{Deserialize, Serialize};
 use chrono::prelude::*;
+
+use prost_wkt_types::*;
 
 include!(concat!(env!("OUT_DIR"), "/my.messages.rs"));
 
@@ -10,7 +11,7 @@ fn main() {
     foo.timestamp = Some(Utc::now().into());
 
     let mut request: Request = Request::default();
-    let any = prost_wkt_types::Any::pack(foo);
+    let any = Any::pack(foo);
     request.request_id = "test1".to_string();
     request.payload = Some(any);
 

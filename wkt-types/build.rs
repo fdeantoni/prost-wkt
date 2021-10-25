@@ -6,7 +6,6 @@ use prost::Message;
 use prost_types::FileDescriptorSet;
 
 fn main() {
-
     let dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     build(&dir, "pbtime");

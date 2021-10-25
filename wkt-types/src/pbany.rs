@@ -1,14 +1,13 @@
 use prost_wkt::MessageSerde;
-use serde::ser::{Serialize, Serializer, SerializeStruct};
 use serde::de::{Deserialize, Deserializer};
+use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 include!(concat!(env!("OUT_DIR"), "/pbany/google.protobuf.rs"));
 
+use prost::{DecodeError, Message};
 use serde_json::json;
-use prost::{Message, DecodeError};
 
 use std::borrow::Cow;
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AnyError {
@@ -17,8 +16,8 @@ pub struct AnyError {
 
 impl AnyError {
     pub fn new<S>(description: S) -> Self
-        where
-            S: Into<Cow<'static, str>>,
+    where
+        S: Into<Cow<'static, str>>,
     {
         AnyError {
             description: description.into(),
@@ -50,10 +49,10 @@ impl Any {
     /// of `type.googleapis.com/package_name.struct_name`, and a value containing the
     /// encoded message.
     pub fn pack<T>(message: T) -> Self
-        where
-            T: Message + MessageSerde + Default
+    where
+        T: Message + MessageSerde + Default,
     {
-        let type_url= MessageSerde::type_url(&message).to_string();
+        let type_url = MessageSerde::type_url(&message).to_string();
         // Serialize the message into a value
         let mut buf = Vec::new();
         buf.reserve(message.encoded_len());
@@ -107,12 +106,12 @@ impl Any {
 }
 
 impl Serialize for Any {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
         match self.clone().unpack() {
-            Ok(result) => {
-                serde::ser::Serialize::serialize(result.as_ref(), serializer)
-            },
+            Ok(result) => serde::ser::Serialize::serialize(result.as_ref(), serializer),
             Err(_) => {
                 let mut state = serializer.serialize_struct("Any", 3)?;
                 state.serialize_field("@type", &self.type_url)?;
@@ -123,19 +122,16 @@ impl Serialize for Any {
     }
 }
 
-impl<'de> Deserialize<'de> for Any  {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
+impl<'de> Deserialize<'de> for Any {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
         D: Deserializer<'de>,
     {
-        let erased: Box<dyn prost_wkt::MessageSerde> = serde::de::Deserialize::deserialize(deserializer).unwrap();
+        let erased: Box<dyn prost_wkt::MessageSerde> =
+            serde::de::Deserialize::deserialize(deserializer).unwrap();
         let type_url = erased.type_url().to_string();
         let value = erased.encoded();
-        Ok(
-            Any {
-                type_url,
-                value
-            }
-        )
+        Ok(Any { type_url, value })
     }
 }
 
@@ -143,19 +139,18 @@ impl<'de> Deserialize<'de> for Any  {
 mod tests {
     use crate::pbany::*;
     use prost::{DecodeError, Message};
-    use prost_wkt::MessageSerde;
-    use typetag;
+    use prost_wkt::*;
     use serde::*;
     use serde_json::json;
 
     #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
-    #[serde(default, rename_all="camelCase")]
+    #[serde(default, rename_all = "camelCase")]
     pub struct Foo {
-        #[prost(string, tag="1")]
+        #[prost(string, tag = "1")]
         pub string: std::string::String,
     }
 
-    #[typetag::serde(name="type.googleapis.com/any.test.Foo")]
+    #[typetag::serde(name = "type.googleapis.com/any.test.Foo")]
     impl prost_wkt::MessageSerde for Foo {
         fn message_name(&self) -> &'static str {
             "Foo"
@@ -219,5 +214,4 @@ mod tests {
         println!("Deserialize default: {:?}", foo);
         assert_eq!(foo, &Foo::default())
     }
-
 }

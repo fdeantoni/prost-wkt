@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use chrono::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use prost_wkt_types::*;
 
@@ -19,7 +19,7 @@ fn main() {
     println!("JSON:\n{}", json);
 
     let back: Request = serde_json::from_str(&json).unwrap();
-    let unpacked: Box< dyn MessageSerde> = back.payload.unwrap().unpack().unwrap();
+    let unpacked: Box<dyn MessageSerde> = back.payload.unwrap().unpack().unwrap();
     let unpacked_foo: &Foo = unpacked.downcast_ref::<Foo>().unwrap();
     println!("Unpacked: {:?}", unpacked_foo);
 }

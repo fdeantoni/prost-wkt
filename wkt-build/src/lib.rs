@@ -1,11 +1,11 @@
-use std::fs::{File, OpenOptions};
-use std::path::PathBuf;
-use std::io::Write;
-use quote::{format_ident, quote};
 use convert_case::{Case, Casing};
+use quote::{format_ident, quote};
+use std::fs::{File, OpenOptions};
+use std::io::Write;
+use std::path::PathBuf;
 
-pub use prost_types::FileDescriptorSet;
 pub use prost::Message;
+pub use prost_types::FileDescriptorSet;
 
 
 pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
@@ -35,7 +35,10 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
     let type_name = message_name.to_case(Case::Pascal);
     let type_name = format_ident!("{}", type_name);
 
-    let dummy_const = format_ident!("IMPL_MESSAGE_SERDE_FOR_{}", message_name.to_case(Case::UpperSnake));
+    let dummy_const = format_ident!(
+        "IMPL_MESSAGE_SERDE_FOR_{}",
+        message_name.to_case(Case::UpperSnake)
+    );
 
     let tokens = quote! {
         #[allow(dead_code)]

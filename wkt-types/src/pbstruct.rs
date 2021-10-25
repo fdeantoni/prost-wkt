@@ -1,5 +1,5 @@
-use serde::ser::{Serialize, Serializer, SerializeSeq, SerializeMap};
-use serde::de::{self, Deserialize, Deserializer, Visitor, MapAccess, SeqAccess};
+use serde::de::{self, Deserialize, Deserializer, MapAccess, SeqAccess, Visitor};
+use serde::ser::{Serialize, SerializeMap, SerializeSeq, Serializer};
 
 use std::borrow::Cow;
 use std::convert::TryFrom;
@@ -14,8 +14,8 @@ pub struct ValueError {
 
 impl ValueError {
     pub fn new<S>(description: S) -> Self
-        where
-            S: Into<Cow<'static, str>>,
+    where
+        S: Into<Cow<'static, str>>,
     {
         ValueError {
             description: description.into(),
@@ -78,7 +78,7 @@ impl TryFrom<Value> for f64 {
         match value.kind {
             Some(value::Kind::NumberValue(num)) => Ok(num),
             Some(_other) => Err(ValueError::new(
-                "Cannot convert to f64 because this is not a ValueNumber."
+                "Cannot convert to f64 because this is not a ValueNumber.",
             )),
             _ => Err(ValueError::new(
                 "Conversion to f64 failed because value is empty!",
@@ -101,7 +101,7 @@ impl TryFrom<Value> for String {
         match value.kind {
             Some(value::Kind::StringValue(string)) => Ok(string),
             Some(_other) => Err(ValueError::new(
-                "Cannot convert to String because this is not a StringValue."
+                "Cannot convert to String because this is not a StringValue.",
             )),
             _ => Err(ValueError::new(
                 "Conversion to String failed because value is empty!",
@@ -124,7 +124,7 @@ impl TryFrom<Value> for bool {
         match value.kind {
             Some(value::Kind::BoolValue(b)) => Ok(b),
             Some(_other) => Err(ValueError::new(
-                "Cannot convert to bool because this is not a BoolValue."
+                "Cannot convert to bool because this is not a BoolValue.",
             )),
             _ => Err(ValueError::new(
                 "Conversion to bool failed because value is empty!",
@@ -148,7 +148,7 @@ impl TryFrom<Value> for std::collections::HashMap<std::string::String, Value> {
         match value.kind {
             Some(value::Kind::StructValue(s)) => Ok(s.fields),
             Some(_other) => Err(ValueError::new(
-                "Cannot convert to HashMap<String, Value> because this is not a StructValue."
+                "Cannot convert to HashMap<String, Value> because this is not a StructValue.",
             )),
             _ => Err(ValueError::new(
                 "Conversion to HashMap<String, Value> failed because value is empty!",
@@ -172,7 +172,7 @@ impl TryFrom<Value> for std::vec::Vec<Value> {
         match value.kind {
             Some(value::Kind::ListValue(list)) => Ok(list.values),
             Some(_other) => Err(ValueError::new(
-                "Cannot convert to Vec<Value> because this is not a ListValue."
+                "Cannot convert to Vec<Value> because this is not a ListValue.",
             )),
             _ => Err(ValueError::new(
                 "Conversion to Vec<Value> failed because value is empty!",
@@ -182,8 +182,10 @@ impl TryFrom<Value> for std::vec::Vec<Value> {
 }
 
 impl Serialize for Value {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
         match &self.kind {
             Some(value::Kind::NumberValue(num)) => serializer.serialize_f64(num.clone()),
             Some(value::Kind::StringValue(string)) => serializer.serialize_str(&string),
@@ -195,23 +197,24 @@ impl Serialize for Value {
                     seq.serialize_element(&e)?;
                 }
                 seq.end()
-            },
+            }
             Some(value::Kind::StructValue(object)) => {
                 let mut map = serializer.serialize_map(Some(object.fields.len()))?;
                 for (k, v) in object.clone().fields {
                     map.serialize_entry(&k, &v)?;
                 }
                 map.end()
-            },
-            _ => serializer.serialize_none()
+            }
+            _ => serializer.serialize_none(),
         }
     }
 }
 
 impl<'de> Deserialize<'de> for Value {
-    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error> where
-        D: Deserializer<'de> {
-
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
         struct ValueVisitor;
 
         impl<'de> Visitor<'de> for ValueVisitor {
@@ -222,64 +225,64 @@ impl<'de> Deserialize<'de> for Value {
             }
 
             fn visit_bool<E>(self, value: bool) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
+            where
+                E: de::Error,
             {
                 Ok(Value::from(value))
             }
 
             fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
+            where
+                E: de::Error,
             {
                 Ok(Value::from(value as f64))
             }
 
             fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
+            where
+                E: de::Error,
             {
                 Ok(Value::from(value as f64))
             }
 
             fn visit_f64<E>(self, value: f64) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
+            where
+                E: de::Error,
             {
                 Ok(Value::from(value))
             }
 
             fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
+            where
+                E: de::Error,
             {
                 Ok(Value::from(String::from(value)))
             }
 
             fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
+            where
+                E: de::Error,
             {
                 Ok(Value::from(value))
             }
 
             fn visit_none<E>(self) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
+            where
+                E: de::Error,
             {
                 Ok(Value::null())
             }
 
             fn visit_unit<E>(self) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
+            where
+                E: de::Error,
             {
                 Ok(Value::null())
             }
 
             fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-                where
-                    A: SeqAccess<'de>,
+            where
+                A: SeqAccess<'de>,
             {
                 let mut values: Vec<Value> = Vec::new();
                 while let Some(el) = seq.next_element()? {
@@ -289,16 +292,16 @@ impl<'de> Deserialize<'de> for Value {
             }
 
             fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-                where
-                    A: MapAccess<'de>,
+            where
+                A: MapAccess<'de>,
             {
-                let mut fields: std::collections::HashMap<String, Value> = std::collections::HashMap::new();
+                let mut fields: std::collections::HashMap<String, Value> =
+                    std::collections::HashMap::new();
                 while let Some((key, value)) = map.next_entry()? {
                     fields.insert(key, value);
                 }
                 Ok(Value::from(fields))
             }
-
         }
         deserializer.deserialize_any(ValueVisitor)
     }
@@ -328,5 +331,4 @@ mod tests {
         let pb_struct: Value = Value::from(map);
         println!("Struct: {:?}", pb_struct);
     }
-
 }

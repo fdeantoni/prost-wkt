@@ -1,14 +1,14 @@
 use std::convert::TryFrom;
-use std::str::FromStr;
+use std::fmt;
 use std::i32;
 use std::i64;
+use std::str::FromStr;
 use std::time;
-use std::fmt;
 
 use chrono::prelude::*;
 
-use serde::ser::{Serialize, Serializer};
 use serde::de::{self, Deserialize, Deserializer, Visitor};
+use serde::ser::{Serialize, Serializer};
 
 include!(concat!(env!("OUT_DIR"), "/pbtime/google.protobuf.rs"));
 
@@ -246,13 +246,12 @@ impl TryFrom<Timestamp> for std::time::SystemTime {
     }
 }
 
-
 /// Converts chrono's `NaiveDateTime` to `Timestamp`..
 impl From<NaiveDateTime> for Timestamp {
     fn from(dt: NaiveDateTime) -> Self {
         Timestamp {
             seconds: dt.timestamp(),
-            nanos: dt.timestamp_subsec_nanos() as i32
+            nanos: dt.timestamp_subsec_nanos() as i32,
         }
     }
 }
@@ -262,7 +261,7 @@ impl From<DateTime<Utc>> for Timestamp {
     fn from(dt: DateTime<Utc>) -> Self {
         Timestamp {
             seconds: dt.timestamp(),
-            nanos: dt.timestamp_subsec_nanos() as i32
+            nanos: dt.timestamp_subsec_nanos() as i32,
         }
     }
 }
@@ -276,11 +275,13 @@ impl Into<DateTime<Utc>> for Timestamp {
 }
 
 impl Serialize for Timestamp {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error> where
-        S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
         let mut ts = Timestamp {
             seconds: self.seconds,
-            nanos: self.nanos
+            nanos: self.nanos,
         };
         ts.normalize();
         let dt: DateTime<Utc> = ts.into();
@@ -288,10 +289,11 @@ impl Serialize for Timestamp {
     }
 }
 
-impl<'de> Deserialize<'de> for Timestamp  {
-    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error> where
-        D: Deserializer<'de> {
-
+impl<'de> Deserialize<'de> for Timestamp {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
         struct TimestampVisitor;
 
         impl<'de> Visitor<'de> for TimestampVisitor {
@@ -302,8 +304,8 @@ impl<'de> Deserialize<'de> for Timestamp  {
             }
 
             fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
+            where
+                E: de::Error,
             {
                 let utc: DateTime<Utc> = chrono::DateTime::from_str(value).unwrap();
                 let ts = Timestamp::from(utc);
@@ -324,11 +326,10 @@ mod tests {
     fn timestamp_test() {
         let ts = Timestamp {
             seconds: 10,
-            nanos: 10
+            nanos: 10,
         };
         let datetime_utc: DateTime<Utc> = ts.into();
 
         println!("{:?}", datetime_utc);
     }
-
 }

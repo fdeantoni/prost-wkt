@@ -37,10 +37,22 @@ fn main() {
     let descriptor_file = out.join("descriptors.bin");
     let mut prost_build = prost_build::Config::new();
     prost_build
-        .type_attribute(".","#[derive(Serialize, Deserialize)] #[serde(default, rename_all=\"camelCase\")]")
-        .extern_path(".google.protobuf.Any", "::prost_wkt_types::Any")
-        .extern_path(".google.protobuf.Timestamp", "::prost_wkt_types::Timestamp")
-        .extern_path(".google.protobuf.Value", "::prost_wkt_types::Value")
+        .type_attribute(
+            ".",
+            "#[derive(Serialize,Deserialize)] #[serde(default)]"
+        )
+        .extern_path(
+            ".google.protobuf.Any",
+            "::prost_wkt_types::Any"
+        )
+        .extern_path(
+            ".google.protobuf.Timestamp",
+            "::prost_wkt_types::Timestamp"
+        )
+        .extern_path(
+            ".google.protobuf.Value",
+            "::prost_wkt_types::Value"
+        )
         .file_descriptor_set_path(&descriptor_file)
         .compile_protos(
             &[
@@ -50,8 +62,13 @@ fn main() {
         )
         .unwrap();
 
-    let descriptor_bytes = std::fs::read(descriptor_file).unwrap();
-    let descriptor = FileDescriptorSet::decode(&descriptor_bytes[..]).unwrap();
+    let descriptor_bytes =
+        std::fs::read(descriptor_file)
+        .unwrap();
+
+    let descriptor =
+        FileDescriptorSet::decode(&descriptor_bytes[..])
+        .unwrap();
 
     prost_wkt_build::add_serde(out, descriptor);
 }
@@ -105,8 +122,13 @@ fn main() {
     println!("JSON:\n{}", json);
 
     let back: Request = serde_json::from_str(&json).unwrap();
-    let unpacked: Box< dyn MessageSerde> = back.payload.unwrap().unpack().unwrap();
-    let unpacked_foo: &Foo = unpacked.downcast_ref::<Foo>().unwrap();
+
+    let unpacked: Box< dyn MessageSerde> =
+        back.payload.unwrap().unpack().unwrap();
+
+    let unpacked_foo: &Foo =
+        unpacked.downcast_ref::<Foo>().unwrap();
+
     println!("Unpacked: {:?}", unpacked_foo);
 }
 ```
@@ -210,12 +232,30 @@ fn main() {
     let descriptor_file = out.join("descriptors.bin");
     let mut prost_build = prost_build::Config::new();
     prost_build
-        .type_attribute(".my.pkg.MyEnum","#[derive(Serialize, Deserialize)]")
-        .type_attribute(".my.pkg.MyMessage","#[derive(Serialize, Deserialize)] #[serde(default, rename_all=\"camelCase\")]")
-        .type_attribute(".my.pkg.SomeOne.body","use serde::{Serialize, Deserialize}; #[derive(Serialize, Deserialize)]")
-        .extern_path(".google.protobuf.Any", "::prost_wkt_types::Any")
-        .extern_path(".google.protobuf.Timestamp", "::prost_wkt_types::Timestamp")
-        .extern_path(".google.protobuf.Value", "::prost_wkt_types::Value")
+        .type_attribute(
+            ".my.pkg.MyEnum",
+            "#[derive(Serialize, Deserialize)]"
+        )
+        .type_attribute(
+            ".my.pkg.MyMessage",
+            "#[derive(Serialize,Deserialize)] #[serde(default)]"
+        )
+        .type_attribute(
+            ".my.pkg.SomeOne.body",
+            "use serde::{Serialize,Deserialize}; #[derive(Serialize,Deserialize)]"
+        )
+        .extern_path(
+            ".google.protobuf.Any",
+            "::prost_wkt_types::Any"
+        )
+        .extern_path(
+            ".google.protobuf.Timestamp",
+            "::prost_wkt_types::Timestamp"
+        )
+        .extern_path(
+            ".google.protobuf.Value",
+            "::prost_wkt_types::Value"
+        )
         .file_descriptor_set_path(&descriptor_file)
         .compile_protos(
             &[
@@ -225,8 +265,11 @@ fn main() {
         )
         .unwrap();
 
-    let descriptor_bytes = std::fs::read(descriptor_file).unwrap();
-    let descriptor = FileDescriptorSet::decode(&descriptor_bytes[..]).unwrap();
+    let descriptor_bytes =
+        std::fs::read(descriptor_file).unwrap();
+
+    let descriptor =
+        FileDescriptorSet::decode(&descriptor_bytes[..]).unwrap();
 
     prost_wkt_build::add_serde(out, descriptor);
 }

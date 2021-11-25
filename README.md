@@ -22,6 +22,7 @@ To use it, include this crate along with prost:
 prost = "0.9"
 prost-wkt = "0.2"
 prost-wkt-types = "0.2"
+serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
 prost-build = "0.9"
@@ -40,7 +41,7 @@ fn main() {
     prost_build
         .type_attribute(
             ".",
-            "#[derive(Serialize,Deserialize)] #[serde(default)]"
+            "#[derive(Serialize,Deserialize)]"
         )
         .extern_path(
             ".google.protobuf.Any",

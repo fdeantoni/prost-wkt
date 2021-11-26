@@ -17,9 +17,11 @@ fn main() -> Result<(), AnyError> {
     request.payload = Some(any);
 
     let json = serde_json::to_string_pretty(&request).expect("Failed to serialize request");
+
     println!("JSON:\n{}", json);
 
     let back: Request = serde_json::from_str(&json).expect("Failed to deserialize request");
+
     if let Some(payload) = back.payload {
         let unpacked: Box<dyn MessageSerde> = payload.unpack()?;
         let unpacked_foo: &Foo = unpacked

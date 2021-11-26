@@ -111,29 +111,28 @@ use prost_wkt_types::*;
 include!(concat!(env!("OUT_DIR"), "/my.pkg.rs"));
 
 fn main() -> Result<(), AnyError> {
-    let mut foo: Foo = Foo::default();
-    foo.data = "Hello World".to_string();
-    foo.timestamp = Some(Utc::now().into());
+    let foo_msg: Foo = Foo {
+        data: "Hello World".to_string(),
+        timestamp: Some(Utc::now().into()),
+    };
 
     let mut request: Request = Request::default();
     let any = Any::pack(foo);
     request.request_id = "test1".to_string();
     request.payload = Some(any);
 
-    let json = serde_json::to_string_pretty(&request)
-        .expect("Failed to serialize request");
+    let json = serde_json::to_string_pretty(&request).expect("Failed to serialize request");
+
     println!("JSON:\n{}", json);
 
-    let back: Request = serde_json::from_str(&json)
-        .expect("Failed to deserialize request");
+    let back: Request = serde_json::from_str(&json).expect("Failed to deserialize request");
 
     if let Some(payload) = back.payload {
-        let unpacked: Box< dyn MessageSerde> =
-            payload.try_unpack()?;
+        let unpacked: Box< dyn MessageSerde> = payload.unpack()?;
 
-        let unpacked_foo: &Foo =
-            unpacked.downcast_ref::<Foo>()
-                .expect("Failed to downcast payload to Foo");
+        let unpacked_foo: &Foo = unpacked
+            .downcast_ref::<Foo>()
+            .expect("Failed to downcast payload to Foo");
 
         println!("Unpacked: {:?}", unpacked_foo);
     }

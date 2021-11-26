@@ -99,13 +99,18 @@ impl Any {
         Ok(instance)
     }
 
+    #[deprecated(since = "0.3.0", note = "Method renamed to `try_unpack`")]
+    pub fn unpack(self) -> Result<Box<dyn prost_wkt::MessageSerde>, AnyError> {
+        self.try_unpack()
+    }
+
     /// Unpacks the contents of the `Any` into the `MessageSerde` trait object. Example
     /// usage:
     ///
     /// ```ignore
-    /// let back: Box<dyn MessageSerde> = any.unpack()?;
+    /// let back: Box<dyn MessageSerde> = any.try_unpack()?;
     /// ```
-    pub fn unpack(self) -> Result<Box<dyn prost_wkt::MessageSerde>, AnyError> {
+    pub fn try_unpack(self) -> Result<Box<dyn prost_wkt::MessageSerde>, AnyError> {
         let type_url = self.type_url.clone();
         let empty = json!({
             "@type": &type_url,
@@ -130,7 +135,7 @@ impl Serialize for Any {
     where
         S: Serializer,
     {
-        match self.clone().unpack() {
+        match self.clone().try_unpack() {
             Ok(result) => serde::ser::Serialize::serialize(result.as_ref(), serializer),
             Err(_) => {
                 let mut state = serializer.serialize_struct("Any", 3)?;

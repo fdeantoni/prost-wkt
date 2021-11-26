@@ -167,7 +167,7 @@ fn test_any_unpack() {
         payload: None,
     };
     let any = prost_wkt_types::Any::try_pack(payload).unwrap();
-    let unpacked = any.unpack().unwrap();
+    let unpacked = any.try_unpack().unwrap();
     let foo = unpacked.downcast_ref::<Foo>().unwrap();
     println!("Unpacked: {:?}", foo);
     assert_eq!(foo.string, "hello payload");

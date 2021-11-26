@@ -117,7 +117,7 @@ fn main() -> Result<(), AnyError> {
     };
 
     let mut request: Request = Request::default();
-    let any = Any::pack(foo);
+    let any = Any::try_pack(foo_msg)?;
     request.request_id = "test1".to_string();
     request.payload = Some(any);
 
@@ -128,7 +128,7 @@ fn main() -> Result<(), AnyError> {
     let back: Request = serde_json::from_str(&json).expect("Failed to deserialize request");
 
     if let Some(payload) = back.payload {
-        let unpacked: Box< dyn MessageSerde> = payload.unpack()?;
+        let unpacked: Box< dyn MessageSerde> = payload.try_unpack()?;
 
         let unpacked_foo: &Foo = unpacked
             .downcast_ref::<Foo>()

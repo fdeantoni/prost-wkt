@@ -23,7 +23,7 @@ fn main() -> Result<(), AnyError> {
     let back: Request = serde_json::from_str(&json).expect("Failed to deserialize request");
 
     if let Some(payload) = back.payload {
-        let unpacked: Box<dyn MessageSerde> = payload.unpack()?;
+        let unpacked: Box<dyn MessageSerde> = payload.try_unpack()?;
         let unpacked_foo: &Foo = unpacked
             .downcast_ref::<Foo>()
             .expect("Failed to downcast message");

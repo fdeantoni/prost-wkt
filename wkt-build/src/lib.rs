@@ -7,7 +7,6 @@ use std::path::PathBuf;
 pub use prost::Message;
 pub use prost_types::FileDescriptorSet;
 
-
 pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
     for fd in &descriptor.file {
         let package_name = match fd.package {
@@ -64,8 +63,14 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
                 fn encoded(&self) -> Vec<u8> {
                     let mut buf = Vec::new();
                     buf.reserve(::prost::Message::encoded_len(self));
-                    ::prost::Message::encode(self, &mut buf).unwrap();
+                    ::prost::Message::encode(self, &mut buf).expect("Failed to encode message");
                     buf
+                }
+                fn try_encoded(&self) -> Result<Vec<u8>, ::prost::EncodeError> {
+                    let mut buf = Vec::new();
+                    buf.reserve(::prost::Message::encoded_len(self));
+                    ::prost::Message::encode(self, &mut buf)?;
+                    Ok(buf)
                 }
             }
         };

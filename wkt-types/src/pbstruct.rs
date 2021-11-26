@@ -187,9 +187,9 @@ impl Serialize for Value {
         S: Serializer,
     {
         match &self.kind {
-            Some(value::Kind::NumberValue(num)) => serializer.serialize_f64(num.clone()),
-            Some(value::Kind::StringValue(string)) => serializer.serialize_str(&string),
-            Some(value::Kind::BoolValue(boolean)) => serializer.serialize_bool(boolean.clone()),
+            Some(value::Kind::NumberValue(num)) => serializer.serialize_f64(*num),
+            Some(value::Kind::StringValue(string)) => serializer.serialize_str(string),
+            Some(value::Kind::BoolValue(boolean)) => serializer.serialize_bool(*boolean),
             Some(value::Kind::NullValue(_)) => serializer.serialize_none(),
             Some(value::Kind::ListValue(list)) => {
                 let mut seq = serializer.serialize_seq(Some(list.values.len()))?;

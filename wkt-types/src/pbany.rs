@@ -44,10 +44,17 @@ impl From<prost::DecodeError> for AnyError {
     }
 }
 
+impl From<prost::EncodeError> for AnyError {
+    fn from(error: prost::EncodeError) -> Self {
+        AnyError::new(format!("Error encoding message: {:?}", error))
+    }
+}
+
 impl Any {
     /// Packs a message into an `Any` containing a `type_url` which will take the format
     /// of `type.googleapis.com/package_name.struct_name`, and a value containing the
     /// encoded message.
+    #[deprecated(since = "0.3.0", note = "please use `try_pack` instead")]
     pub fn pack<T>(message: T) -> Self
     where
         T: Message + MessageSerde + Default,
@@ -56,20 +63,36 @@ impl Any {
         // Serialize the message into a value
         let mut buf = Vec::new();
         buf.reserve(message.encoded_len());
-        message.encode(&mut buf).unwrap();
+        message.encode(&mut buf).expect("Failed to encode message");
         Any {
             type_url,
             value: buf,
         }
     }
 
+    /// Packs a message into an `Any` containing a `type_url` which will take the format
+    /// of `type.googleapis.com/package_name.struct_name`, and a value containing the
+    /// encoded message.
+    pub fn try_pack<T>(message: T) -> Result<Self, AnyError>
+    where
+        T: Message + MessageSerde + Default,
+    {
+        let type_url = MessageSerde::type_url(&message).to_string();
+        // Serialize the message into a value
+        let mut buf = Vec::new();
+        buf.reserve(message.encoded_len());
+        message.encode(&mut buf)?;
+        let encoded = Any {
+            type_url,
+            value: buf,
+        };
+        Ok(encoded)
+    }
+
     /// Unpacks the contents of the `Any` into the provided message type. Example usage:
     ///
-    /// ```rust
-    /// # use prost_wkt::*;
-    /// # let foo: Foo = Foo::default();
-    /// # let any: Any = Any::pack(foo);
-    /// let back: Foo = any.unpack_as(Foo::default()).unwrap();
+    /// ```ignore
+    /// let back: Foo = any.unpack_as(Foo::default())?;
     /// ```
     pub fn unpack_as<T: Message>(self, mut target: T) -> Result<T, AnyError> {
         let instance = target.merge(self.value.as_slice()).map(|_| target)?;
@@ -79,11 +102,8 @@ impl Any {
     /// Unpacks the contents of the `Any` into the `MessageSerde` trait object. Example
     /// usage:
     ///
-    /// ```rust
-    /// # use prost_wkt::*;
-    /// # let foo: Foo = Foo::default();
-    /// # let any: Any = Any::pack(foo);
-    /// let back: Box<dyn MessageSerde> = any.unpack().unwrap();
+    /// ```ignore
+    /// let back: Box<dyn MessageSerde> = any.unpack()?;
     /// ```
     pub fn unpack(self) -> Result<Box<dyn prost_wkt::MessageSerde>, AnyError> {
         let type_url = self.type_url.clone();
@@ -96,11 +116,11 @@ impl Any {
                 let description = format!(
                     "Failed to deserialize {}. Make sure it implements Serialize and Deserialize. Error reported: {}",
                     type_url,
-                    error.to_string()
+                    error
                 );
                 AnyError::new(description)
             })?;
-        let instance = template.new_instance(self.value.clone())?;
+        let instance = template.new_instance(self.value)?;
         Ok(instance)
     }
 }
@@ -128,9 +148,11 @@ impl<'de> Deserialize<'de> for Any {
         D: Deserializer<'de>,
     {
         let erased: Box<dyn prost_wkt::MessageSerde> =
-            serde::de::Deserialize::deserialize(deserializer).unwrap();
+            serde::de::Deserialize::deserialize(deserializer)?;
         let type_url = erased.type_url().to_string();
-        let value = erased.encoded();
+        let value = erased.try_encoded().map_err(|err| {
+            serde::de::Error::custom(format!("Failed to encode message: {:?}", err))
+        })?;
         Ok(Any { type_url, value })
     }
 }
@@ -138,7 +160,7 @@ impl<'de> Deserialize<'de> for Any {
 #[cfg(test)]
 mod tests {
     use crate::pbany::*;
-    use prost::{DecodeError, Message};
+    use prost::{DecodeError, EncodeError, Message};
     use prost_wkt::*;
     use serde::*;
     use serde_json::json;
@@ -176,6 +198,13 @@ mod tests {
             Message::encode(self, &mut buf).unwrap();
             buf
         }
+
+        fn try_encoded(&self) -> Result<Vec<u8>, EncodeError> {
+            let mut buf = Vec::new();
+            buf.reserve(Message::encoded_len(self));
+            Message::encode(self, &mut buf)?;
+            Ok(buf)
+        }
     }
 
     #[test]
@@ -183,7 +212,7 @@ mod tests {
         let msg = Foo {
             string: "Hello World!".to_string(),
         };
-        let any = Any::pack(msg.clone());
+        let any = Any::try_pack(msg.clone()).unwrap();
         println!("{:?}", any);
         let unpacked = any.unpack_as(Foo::default()).unwrap();
         println!("{:?}", unpacked);
@@ -195,7 +224,7 @@ mod tests {
         let msg = Foo {
             string: "Hello World!".to_string(),
         };
-        let any = Any::pack(msg.clone());
+        let any = Any::try_pack(msg.clone()).unwrap();
         println!("{:?}", any);
         let unpacked: &dyn MessageSerde = &any.unpack_as(Foo::default()).unwrap();
         let downcast = unpacked.downcast_ref::<Foo>().unwrap();

@@ -20,12 +20,12 @@ To use it, include this crate along with prost:
 ```toml
 [dependencies]
 prost = "0.9"
-prost-wkt = "0.2"
-prost-wkt-types = "0.2"
+prost-wkt = "0.3"
+prost-wkt-types = "0.3"
 
 [build-dependencies]
 prost-build = "0.9"
-prost-wkt-build = "0.2"
+prost-wkt-build = "0.3"
 ```
 
 In your `bulid.rs`, make sure to add the following options:
@@ -109,7 +109,7 @@ use prost_wkt_types::*;
 
 include!(concat!(env!("OUT_DIR"), "/my.pkg.rs"));
 
-fn main() {
+fn main() -> Result<(), AnyError> {
     let mut foo: Foo = Foo::default();
     foo.data = "Hello World".to_string();
     foo.timestamp = Some(Utc::now().into());
@@ -119,18 +119,23 @@ fn main() {
     request.request_id = "test1".to_string();
     request.payload = Some(any);
 
-    let json = serde_json::to_string_pretty(&request).unwrap();
+    let json = serde_json::to_string_pretty(&request)
+        .expect("Failed to serialize request");
     println!("JSON:\n{}", json);
 
-    let back: Request = serde_json::from_str(&json).unwrap();
+    let back: Request = serde_json::from_str(&json)
+        .expect("Failed to deserialize request");
 
-    let unpacked: Box< dyn MessageSerde> =
-        back.payload.unwrap().unpack().unwrap();
+    if let Some(payload) = back.payload {
+        let unpacked: Box< dyn MessageSerde> =
+            payload.try_unpack()?;
 
-    let unpacked_foo: &Foo =
-        unpacked.downcast_ref::<Foo>().unwrap();
+        let unpacked_foo: &Foo =
+            unpacked.downcast_ref::<Foo>()
+                .expect("Failed to downcast payload to Foo");
 
-    println!("Unpacked: {:?}", unpacked_foo);
+        println!("Unpacked: {:?}", unpacked_foo);
+    }
 }
 ```
 

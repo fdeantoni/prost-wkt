@@ -307,7 +307,12 @@ impl<'de> Deserialize<'de> for Timestamp {
             where
                 E: de::Error,
             {
-                let utc: DateTime<Utc> = chrono::DateTime::from_str(value).unwrap();
+                let utc: DateTime<Utc> = chrono::DateTime::from_str(value).map_err(|err| {
+                    serde::de::Error::custom(format!(
+                        "Failed to parse {} as datetime: {:?}",
+                        value, err
+                    ))
+                })?;
                 let ts = Timestamp::from(utc);
                 Ok(ts)
             }

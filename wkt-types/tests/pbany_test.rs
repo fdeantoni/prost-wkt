@@ -1,4 +1,4 @@
-use prost::{DecodeError, Message};
+use prost::{DecodeError, EncodeError, Message};
 use prost_wkt::*;
 use prost_wkt_types::*;
 use serde::{Deserialize, Serialize};
@@ -49,6 +49,13 @@ impl prost_wkt::MessageSerde for Foo {
         Message::encode(self, &mut buf).unwrap();
         buf
     }
+
+    fn try_encoded(&self) -> Result<Vec<u8>, EncodeError> {
+        let mut buf = Vec::new();
+        buf.reserve(Message::encoded_len(self));
+        Message::encode(self, &mut buf)?;
+        Ok(buf)
+    }
 }
 
 fn create_struct() -> Value {
@@ -85,7 +92,7 @@ fn test_any_serialization() {
         boolean: true,
         data: Some(prost_wkt_types::Value::from("world".to_string())),
         list: vec!["one".to_string(), "two".to_string()],
-        payload: Some(prost_wkt_types::Any::pack(inner)),
+        payload: prost_wkt_types::Any::try_pack(inner).ok(),
     };
     println!(
         "Serialized to string: {}",
@@ -138,7 +145,7 @@ fn test_any_serialize_deserialize() {
         boolean: true,
         data: Some(prost_wkt_types::Value::from("world".to_string())),
         list: vec!["one".to_string(), "two".to_string()],
-        payload: Some(prost_wkt_types::Any::pack(inner)),
+        payload: prost_wkt_types::Any::try_pack(inner).ok(),
     };
 
     let json = serde_json::to_string(&original).unwrap();
@@ -149,6 +156,7 @@ fn test_any_serialize_deserialize() {
 }
 
 #[test]
+#[allow(clippy::blacklisted_name)]
 fn test_any_unpack() {
     let payload = Foo {
         string: String::from("hello payload"),
@@ -158,7 +166,7 @@ fn test_any_unpack() {
         list: vec!["een".to_string(), "twee".to_string()],
         payload: None,
     };
-    let any = prost_wkt_types::Any::pack(payload);
+    let any = prost_wkt_types::Any::try_pack(payload).unwrap();
     let unpacked = any.unpack().unwrap();
     let foo = unpacked.downcast_ref::<Foo>().unwrap();
     println!("Unpacked: {:?}", foo);

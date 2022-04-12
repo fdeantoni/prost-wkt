@@ -1,6 +1,6 @@
 [package]
 name = "prost-wkt-types"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fdeantoni/prost-wkt"
@@ -19,7 +19,7 @@ default = ["std"]
 std = []
 
 [dependencies]
-prost-wkt = { version="0.3.0", path = ".." }
+prost-wkt = { version="0.3.1", path = ".." }
 prost = "0.10"
 serde = "1.0"
 serde_json = "1.0"
@@ -30,6 +30,6 @@ chrono = { version = "0.4", features = ["serde"] }
 prost = "0.10.0"
 prost-types = "0.10.0"
 prost-build = "0.10"
-prost-wkt-build = { version="0.3.0", path = "../wkt-build" }
+prost-wkt-build = { version="0.3.1", path = "../wkt-build" }
 reqwest = { version = "0.11", features = ["blocking"] }
 # bytes = "1"

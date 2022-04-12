@@ -46,10 +46,10 @@ fn build(dir: &Path, proto: &str) {
 }
 
 fn download_prost_pbtime(dir: &Path) {
-    let url = "https://raw.githubusercontent.com/tokio-rs/prost/v0.9.0/prost-types/src/lib.rs";
+    let url = "https://raw.githubusercontent.com/tokio-rs/prost/v0.10.0/prost-types/src/lib.rs";
     let resp = reqwest::blocking::get(url).unwrap().text().unwrap();
     let lines: Vec<String> = resp.lines().map(|s| s.to_string()).collect();
-    let selection = &lines[27..256];
+    let selection = &lines[27..258];
     let mut string = String::new();
     for line in selection {
         string.push_str(line);

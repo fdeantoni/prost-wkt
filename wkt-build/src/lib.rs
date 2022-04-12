@@ -15,7 +15,10 @@ pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
         };
 
         let rust_path = out.join(format!("{}.rs", package_name));
-        let mut rust_file = OpenOptions::new().append(true).open(rust_path).unwrap();
+
+        // In some cases the generated file would be in empty. These files are no longer created by Prost, so
+        // we'll create here. Otherwise we append.
+        let mut rust_file = OpenOptions::new().create(true).append(true).open(rust_path).unwrap();
 
         for msg in &fd.message_type {
             let message_name = match msg.name {

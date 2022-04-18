@@ -7,6 +7,8 @@ use std::path::PathBuf;
 pub use prost::Message;
 pub use prost_types::FileDescriptorSet;
 
+use prost_build::Module;
+
 pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
     for fd in &descriptor.file {
         let package_name = match fd.package {
@@ -14,7 +16,7 @@ pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
             None => continue,
         };
 
-        let rust_path = out.join(format!("{}.rs", package_name));
+        let rust_path = out.join(Module::from_protobuf_package_name(package_name).to_file_name_or(package_name));
 
         // In some cases the generated file would be in empty. These files are no longer created by Prost, so
         // we'll create here. Otherwise we append.

@@ -11,7 +11,7 @@ use prost_types::FileDescriptorSet;
 fn main() {
 
     let dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    download_prost_pbtime(&dir);
+    process_prost_pbtime(&dir);
 
     build(&dir, "pbtime");
     build(&dir, "pbstruct");
@@ -45,10 +45,9 @@ fn build(dir: &Path, proto: &str) {
     prost_wkt_build::add_serde(out, descriptor);
 }
 
-fn download_prost_pbtime(dir: &Path) {
-    let url = "https://raw.githubusercontent.com/tokio-rs/prost/v0.10.0/prost-types/src/lib.rs";
-    let resp = reqwest::blocking::get(url).unwrap().text().unwrap();
-    let lines: Vec<String> = resp.lines().map(|s| s.to_string()).collect();
+fn process_prost_pbtime(dir: &Path) {
+    let source: String = std::fs::read_to_string("./resources/lib.rs").unwrap().parse().unwrap();
+    let lines: Vec<String> = source.split('\n').map(|s| s.to_string() ).collect();
     let selection = &lines[27..258];
     let mut string = String::new();
     for line in selection {

@@ -1,16 +1,19 @@
 syntax = "proto3";
 
-import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
 package my.messages;
 
-message Request {
-    string requestId = 1;
-    google.protobuf.Any payload = 2;
+message Content {
+    oneof body {
+        string some_string = 1;
+        bool some_bool = 2;
+        float some_float = 3;
+    }
 }
 
 message Foo {
     string data = 1;
     google.protobuf.Timestamp timestamp = 2;
+    Content content = 3;
 }

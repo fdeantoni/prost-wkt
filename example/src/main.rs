@@ -1,14 +1,18 @@
 use chrono::prelude::*;
-use serde::{Deserialize, Serialize};
 
 use prost_wkt_types::*;
 
 include!(concat!(env!("OUT_DIR"), "/my.messages.rs"));
+include!(concat!(env!("OUT_DIR"), "/my.requests.rs"));
 
 fn main() -> Result<(), AnyError> {
+
+    let content: Content = Content { body: Some(content::Body::SomeBool(true)) };
+
     let foo_msg: Foo = Foo {
         data: "Hello World".to_string(),
         timestamp: Some(Utc::now().into()),
+        content: Some(content),
     };
 
     let mut request: Request = Request::default();

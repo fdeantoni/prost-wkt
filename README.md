@@ -41,7 +41,7 @@ fn main() {
     prost_build
         .type_attribute(
             ".",
-            "#[derive(Serialize,Deserialize)]"
+            "#[derive(serde::Serialize,serde::Deserialize)]"
         )
         .extern_path(
             ".google.protobuf.Any",
@@ -240,15 +240,15 @@ fn main() {
     prost_build
         .type_attribute(
             ".my.pkg.MyEnum",
-            "#[derive(Serialize, Deserialize)]"
+            "#[derive(serde::Serialize,serde::Deserialize)]"
         )
         .type_attribute(
             ".my.pkg.MyMessage",
-            "#[derive(Serialize,Deserialize)] #[serde(default)]"
+            "#[derive(serde::Serialize,serde::Deserialize)] #[serde(default)]"
         )
         .type_attribute(
             ".my.pkg.SomeOne.body",
-            "use serde::{Serialize,Deserialize}; #[derive(Serialize,Deserialize)]"
+            "#[derive(serde::Serialize,serde::Deserialize)]"
         )
         .extern_path(
             ".google.protobuf.Any",

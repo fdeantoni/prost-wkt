@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+
+package my.requests;
+
+message Request {
+    string requestId = 1;
+    google.protobuf.Any payload = 2;
+}

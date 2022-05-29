@@ -20,13 +20,13 @@ To use it, include this crate along with prost:
 ```toml
 [dependencies]
 prost = "0.10"
-prost-wkt = "0.3.1"
-prost-wkt-types = "0.3.1"
+prost-wkt = "0.3"
+prost-wkt-types = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
 prost-build = "0.10"
-prost-wkt-build = "0.3.1"
+prost-wkt-build = "0.3"
 ```
 
 In your `bulid.rs`, make sure to add the following options:

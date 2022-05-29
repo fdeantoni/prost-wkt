@@ -46,8 +46,8 @@ fn build(dir: &Path, proto: &str) {
 }
 
 fn process_prost_pbtime(dir: &Path) {
-    let source: String = std::fs::read_to_string("./resources/lib.rs").unwrap().parse().unwrap();
-    let lines: Vec<String> = source.split('\n').map(|s| s.to_string() ).collect();
+    let source: String = std::fs::read_to_string("./resources/lib.rs").unwrap();
+    let lines: Vec<&str> = source.split('\n').collect();
     let selection = &lines[27..258];
     let mut string = String::new();
     for line in selection {

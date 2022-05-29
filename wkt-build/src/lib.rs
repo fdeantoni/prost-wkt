@@ -35,6 +35,9 @@ pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
     }
 }
 
+// This method uses the `convert_case` crate to properly format the message name
+// to Pascal Case as the prost_build::ident::{to_snake, to_upper_camel} methods
+// in the `ident` module of prost_build is private.
 fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, type_url: &str) {
     let type_name = message_name.to_case(Case::Pascal);
     let type_name = format_ident!("{}", type_name);

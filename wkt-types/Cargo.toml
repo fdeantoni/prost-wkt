@@ -31,4 +31,3 @@ prost = "0.10.0"
 prost-types = "0.10.0"
 prost-build = "0.10"
 prost-wkt-build = { version="0.3.2", path = "../wkt-build" }
-reqwest = { version = "0.11", features = ["blocking"] }

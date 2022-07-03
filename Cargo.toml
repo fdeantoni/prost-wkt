@@ -1,6 +1,6 @@
 [package]
 name = "prost-wkt"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fdeantoni/prost-wkt"
@@ -13,10 +13,10 @@ edition = "2018"
 members = [ "wkt-build", "wkt-types", "example" ]
 
 [dependencies]
-prost = "0.10"
+prost = "0.10.0"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 mopa = "0.2.2"
-typetag = "0.1"
+typetag = "0.2"

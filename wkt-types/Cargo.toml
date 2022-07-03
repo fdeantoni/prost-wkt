@@ -1,6 +1,6 @@
 [package]
 name = "prost-wkt-types"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fdeantoni/prost-wkt"
@@ -19,8 +19,8 @@ default = ["std"]
 std = []
 
 [dependencies]
-prost-wkt = { version="0.3.2", path = ".." }
-prost = "0.10"
+prost-wkt = { version = "0.3.3", path = ".." }
+prost = "0.10.0"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
@@ -29,5 +29,5 @@ chrono = { version = "0.4", features = ["serde"] }
 [build-dependencies]
 prost = "0.10.0"
 prost-types = "0.10.0"
-prost-build = "0.10"
-prost-wkt-build = { version="0.3.2", path = "../wkt-build" }
+prost-build = "0.10.0"
+prost-wkt-build = { version = "0.3.3", path = "../wkt-build" }

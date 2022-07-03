@@ -331,4 +331,30 @@ mod tests {
         let pb_struct: Value = Value::from(map);
         println!("Struct: {:?}", pb_struct);
     }
+
+    #[test]
+    fn convert_serde_json_test() {
+        let data = r#"{
+            "string":"hello",
+            "timestamp":"1970-01-01T00:01:39.000000042Z",
+            "boolean":true,
+            "data": {
+              "test_number": 1.0,
+              "test_bool": true,
+              "test_string": "hi there",
+              "test_list": [1.0, 2.0, 3.0, 4.0],
+              "test_inner_struct": {
+                "one": 1.0,
+                "two": 2.0
+              }
+            },
+            "list": []
+          }"#;
+          let sj: serde_json::Value = serde_json::from_str(data).unwrap();
+          let pj: Value = serde_json::from_value(sj.clone()).unwrap();
+          println!("prost_wkt_types Value: {:?}", pj);
+          let string: String = serde_json::to_string(&pj).unwrap();
+          let back: serde_json::Value = serde_json::from_str(&string).unwrap();
+          assert_eq!(sj, back);
+    }
 }

@@ -170,7 +170,7 @@ mod tests {
     use serde::*;
     use serde_json::json;
 
-    #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+    #[derive(Clone, Eq, PartialEq, ::prost::Message, Serialize, Deserialize)]
     #[serde(default, rename_all = "camelCase")]
     pub struct Foo {
         #[prost(string, tag = "1")]

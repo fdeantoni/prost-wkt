@@ -8,6 +8,9 @@ use std::io::Write;
 use prost::Message;
 use prost_types::FileDescriptorSet;
 
+use regex::Regex;
+
+
 fn main() {
 
     let dir = PathBuf::from(env::var("OUT_DIR").unwrap());
@@ -46,9 +49,14 @@ fn build(dir: &Path, proto: &str) {
 }
 
 fn process_prost_pbtime(dir: &Path) {
+    process_prost_types_lib(dir);
+    process_prost_types_datetime(dir);
+}
+
+fn process_prost_types_lib(dir: &Path) {
     let source: String = std::fs::read_to_string("./resources/lib.rs").unwrap();
     let lines: Vec<&str> = source.split('\n').collect();
-    let selection = &lines[27..258];
+    let selection = &lines[25..395];
     let mut string = String::new();
     for line in selection {
         string.push_str(line);
@@ -57,4 +65,20 @@ fn process_prost_pbtime(dir: &Path) {
 
     let file = dir.join("prost_snippet.rs");
     File::create(file).unwrap().write_all(string.as_bytes()).unwrap();
+}
+
+fn process_prost_types_datetime(dir: &Path) {
+    let source: String = std::fs::read_to_string("./resources/datetime.rs").unwrap();
+    let lines: Vec<&str> = source.split('\n').collect();
+    let selection = &lines[0..585];
+    let mut string = String::new();
+    for line in selection {
+        string.push_str(line);
+        string.push('\n');
+    }
+
+    let re = Regex::new(r"crate").unwrap();
+    let result = re.replace_all(&string, "super").to_string();
+    let file = dir.join("datetime.rs");
+    File::create(file).unwrap().write_all(result.as_bytes()).unwrap();
 }

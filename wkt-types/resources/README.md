@@ -1,1 +1,1 @@
-The `lib.rs` file contained in this directory is from [prost-types](https://raw.githubusercontent.com/tokio-rs/prost/v0.10.0/prost-types/src/lib.rs). It is used by `build.rs` to create the appropriate `prost_snippet.rs` in `./src/pbtime.rs`.
+The files contained in this directory is from [prost-types](https://raw.githubusercontent.com/tokio-rs/prost/v0.10.0/prost-types/src/). It is used by `build.rs` to create the appropriate `prost_snippet.rs` in `./src/pbtime.rs`.

@@ -11,11 +11,7 @@ fn main() {
             "#[derive(serde::Serialize, serde::Deserialize)] #[serde(default, rename_all=\"camelCase\")]",
         )
         .type_attribute(
-            ".my.messages.foo",
-            "#[derive(serde::Serialize, serde::Deserialize)] #[serde(default, rename_all=\"camelCase\")]",
-        )
-        .type_attribute(
-            ".my.messages.Point2d",
+            ".my.messages.Foo",
             "#[derive(serde::Serialize, serde::Deserialize)] #[serde(default, rename_all=\"camelCase\")]",
         )
         .type_attribute(

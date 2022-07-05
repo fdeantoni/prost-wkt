@@ -14,4 +14,5 @@ prost = "0.10.4"
 prost-types = "0.10.1"
 prost-build = "0.10.4"
 quote = "1.0"
-convert_case = "0.5"
+heck = "0.4"
+

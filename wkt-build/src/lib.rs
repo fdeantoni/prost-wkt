@@ -1,4 +1,4 @@
-use convert_case::{Case, Casing};
+use heck::{ToShoutySnakeCase, ToUpperCamelCase};
 use quote::{format_ident, quote};
 use std::fs::{File, OpenOptions};
 use std::io::Write;
@@ -16,11 +16,16 @@ pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
             None => continue,
         };
 
-        let rust_path = out.join(Module::from_protobuf_package_name(package_name).to_file_name_or(package_name));
+        let rust_path = out
+            .join(Module::from_protobuf_package_name(package_name).to_file_name_or(package_name));
 
         // In some cases the generated file would be in empty. These files are no longer created by Prost, so
         // we'll create here. Otherwise we append.
-        let mut rust_file = OpenOptions::new().create(true).append(true).open(rust_path).unwrap();
+        let mut rust_file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(rust_path)
+            .unwrap();
 
         for msg in &fd.message_type {
             let message_name = match msg.name {
@@ -35,16 +40,16 @@ pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
     }
 }
 
-// This method uses the `convert_case` crate to properly format the message name
-// to Pascal Case as the prost_build::ident::{to_snake, to_upper_camel} methods
+// This method uses the `heck` crate (the same that prost uses) to properly format the message name
+// to UpperCamelCase as the prost_build::ident::{to_snake, to_upper_camel} methods
 // in the `ident` module of prost_build is private.
 fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, type_url: &str) {
-    let type_name = message_name.to_case(Case::Pascal);
+    let type_name = message_name.to_upper_camel_case();
     let type_name = format_ident!("{}", type_name);
 
     let dummy_const = format_ident!(
         "IMPL_MESSAGE_SERDE_FOR_{}",
-        message_name.to_case(Case::UpperSnake)
+        message_name.to_shouty_snake_case()
     );
 
     let tokens = quote! {

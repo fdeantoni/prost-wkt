@@ -58,6 +58,16 @@ impl prost_wkt::MessageSerde for Foo {
     }
 }
 
+::prost_wkt::inventory::submit!{
+    ::prost_wkt::MessageSerdeDecoderEntry {
+        type_url: "type.googleapis.com/any.test.Foo",
+        decoder: |buf: &[u8]| {
+            let msg: Foo = ::prost::Message::decode(buf)?;
+            Ok(Box::new(msg))
+        }
+    }
+}
+
 fn create_struct() -> Value {
     let number: Value = Value::from(10.0);
     let null: Value = Value::null();

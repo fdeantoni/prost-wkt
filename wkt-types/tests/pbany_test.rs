@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
 #[prost(package = "any.test")]
-#[serde(default, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct Foo {
     #[prost(string, tag = "1")]
     pub string: std::string::String,

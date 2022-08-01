@@ -12,7 +12,7 @@ edition = "2018"
 [dependencies]
 prost = "0.10.4"
 prost-types = "0.10.1"
-prost-build = "0.10.4"
+prost-build = "0.11.0"
 quote = "1.0"
 heck = "0.4"
 

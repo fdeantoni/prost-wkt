@@ -25,6 +25,11 @@ jobs:
           override: true
           profile: minimal
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Execute build
         uses: actions-rs/cargo@v1
         with:

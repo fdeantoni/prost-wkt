@@ -1,7 +1,7 @@
 # *PROST Well Known Types JSON Serialization and Deserialization* #
 [![crates.io](https://buildstats.info/crate/prost-wkt-types)](https://crates.io/crates/prost-wkt-types) [![build](https://github.com/fdeantoni/prost-wkt/actions/workflows/rust.yml/badge.svg)](https://github.com/fdeantoni/prost-wkt/actions/workflows/rust.yml)
 
-[Prost](https://github.com/danburkert/prost) is a [Protocol Buffers](https://developers.google.com/protocol-buffers/)
+[Prost](https://github.com/tokio-rs/prost) is a [Protocol Buffers](https://developers.google.com/protocol-buffers/)
 implementation for the [Rust Language](https://www.rust-lang.org/) that generates simple, idiomatic Rust code from
 `proto2` and `proto3` files.
 
@@ -19,17 +19,17 @@ To use it, include this crate along with prost:
 
 ```toml
 [dependencies]
-prost = "0.10"
+prost = "0.11"
 prost-wkt = "0.3"
 prost-wkt-types = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
-prost-build = "0.10"
+prost-build = "0.11"
 prost-wkt-build = "0.3"
 ```
 
-In your `bulid.rs`, make sure to add the following options:
+In your `build.rs`, make sure to add the following options:
 ```rust
 use std::{env, path::PathBuf};
 use prost_wkt_build::*;

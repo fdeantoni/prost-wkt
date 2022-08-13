@@ -9,3 +9,7 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "prost"
+      - dependency-name: "prost-build"
+      - dependency-name: "prost-types"

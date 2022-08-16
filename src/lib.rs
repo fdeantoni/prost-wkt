@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate mopa;
 
+pub use inventory;
+
 pub use typetag;
 
 /// Trait to support serialization and deserialization of `prost` messages.
@@ -22,3 +24,12 @@ pub trait MessageSerde: prost::Message + mopa::Any {
 }
 
 mopafy!(MessageSerde);
+
+type MessageSerdeDecoderFn = fn(&[u8]) -> Result<Box<dyn MessageSerde>, ::prost::DecodeError>;
+
+pub struct MessageSerdeDecoderEntry {
+    pub type_url: &'static str,
+    pub decoder: MessageSerdeDecoderFn,
+}
+
+inventory::collect!(MessageSerdeDecoderEntry);

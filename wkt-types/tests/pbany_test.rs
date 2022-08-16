@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 #[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
 #[prost(package = "any.test")]
-#[serde(default, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct Foo {
     #[prost(string, tag = "1")]
     pub string: std::string::String,
@@ -55,6 +55,16 @@ impl prost_wkt::MessageSerde for Foo {
         buf.reserve(Message::encoded_len(self));
         Message::encode(self, &mut buf)?;
         Ok(buf)
+    }
+}
+
+::prost_wkt::inventory::submit!{
+    ::prost_wkt::MessageSerdeDecoderEntry {
+        type_url: "type.googleapis.com/any.test.Foo",
+        decoder: |buf: &[u8]| {
+            let msg: Foo = ::prost::Message::decode(buf)?;
+            Ok(Box::new(msg))
+        }
     }
 }
 

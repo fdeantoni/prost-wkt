@@ -5,7 +5,6 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 include!(concat!(env!("OUT_DIR"), "/pbany/google.protobuf.rs"));
 
 use prost::{DecodeError, Message};
-use serde_json::json;
 
 use std::borrow::Cow;
 
@@ -111,22 +110,20 @@ impl Any {
     /// let back: Box<dyn MessageSerde> = any.try_unpack()?;
     /// ```
     pub fn try_unpack(self) -> Result<Box<dyn prost_wkt::MessageSerde>, AnyError> {
-        let type_url = self.type_url.clone();
-        let empty = json!({
-            "@type": &type_url,
-            "value": {}
-        });
-        let template: Box<dyn prost_wkt::MessageSerde> = serde_json::from_value(empty)
-            .map_err(|error| {
-                let description = format!(
-                    "Failed to deserialize {}. Make sure it implements Serialize and Deserialize. Error reported: {}",
-                    type_url,
-                    error
-                );
-                AnyError::new(description)
-            })?;
-        let instance = template.new_instance(self.value)?;
-        Ok(instance)
+        ::prost_wkt::inventory::iter::<::prost_wkt::MessageSerdeDecoderEntry>
+            .into_iter()
+            .find(|entry| self.type_url == entry.type_url)
+            .ok_or_else(|| format!("Failed to deserialize {}. Make sure prost-wkt-build is executed.", self.type_url))
+            .and_then(|entry| {
+                (entry.decoder)(&self.value).map_err(|error| {
+                    format!(
+                        "Failed to deserialize {}. Make sure it implements prost::Message. Error reported: {}",
+                        self.type_url,
+                        error
+                    )
+                })
+            })
+            .map_err(AnyError::new)
     }
 }
 

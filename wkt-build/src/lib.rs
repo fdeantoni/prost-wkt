@@ -86,6 +86,16 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
                     Ok(buf)
                 }
             }
+
+            ::prost_wkt::inventory::submit!{
+                ::prost_wkt::MessageSerdeDecoderEntry {
+                    type_url: #type_url,
+                    decoder: |buf: &[u8]| {
+                        let msg: #type_name = ::prost::Message::decode(buf)?;
+                        Ok(Box::new(msg))
+                    }
+                }
+            }
         };
     };
 

@@ -1,6 +1,7 @@
 use core::convert::TryFrom;
 use core::str::FromStr;
 use core::*;
+use std::convert::TryInto;
 
 use chrono::prelude::*;
 
@@ -21,7 +22,7 @@ impl From<NaiveDateTime> for Timestamp {
     }
 }
 
-/// Converts chrono's `DateTime<UTtc>` to `Timestamp`..
+/// Converts chrono's `DateTime<UTtc>` to `Timestamp`
 impl From<DateTime<Utc>> for Timestamp {
     fn from(dt: DateTime<Utc>) -> Self {
         Timestamp {
@@ -34,7 +35,14 @@ impl From<DateTime<Utc>> for Timestamp {
 /// Converts proto timestamp to chrono's DateTime<Utc>
 impl From<Timestamp> for DateTime<Utc> {
     fn from(val: Timestamp) -> Self {
-        let dt = NaiveDateTime::from_timestamp(val.seconds, val.nanos as u32);
+        let mut value = val;
+        // A call to `normalize` should capture all out-of-bound sitations hopefully
+        // ensuring a panic never happens! Ideally this implementation should be
+        // deprecated in favour of TryFrom but unfortunately having `TryFrom` along with
+        // `From` causes a conflict.
+        value.normalize();
+        let dt = NaiveDateTime::from_timestamp_opt(value.seconds, value.nanos as u32)
+            .expect("invalid or out-of-range datetime");
         DateTime::from_utc(dt, Utc)
     }
 }
@@ -49,7 +57,7 @@ impl Serialize for Timestamp {
             nanos: self.nanos,
         };
         ts.normalize();
-        let dt: DateTime<Utc> = ts.into();
+        let dt: DateTime<Utc> = ts.try_into().map_err(serde::ser::Error::custom)?;
         serializer.serialize_str(format!("{:?}", dt).as_str())
     }
 }
@@ -93,10 +101,10 @@ mod tests {
     use chrono::{DateTime, Utc};
 
     #[test]
-    fn timestamp_test() {
+    fn invalid_timestamp_test() {
         let ts = Timestamp {
             seconds: 10,
-            nanos: 10,
+            nanos: 2000000000,
         };
         let datetime_utc: DateTime<Utc> = ts.into();
 

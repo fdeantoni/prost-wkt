@@ -166,7 +166,7 @@ fn test_any_serialize_deserialize() {
 }
 
 #[test]
-#[allow(clippy::blacklisted_name)]
+#[allow(clippy::disallowed_names)]
 fn test_any_unpack() {
     let payload = Foo {
         string: String::from("hello payload"),

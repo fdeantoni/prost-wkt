@@ -281,6 +281,19 @@ fn main() {
 }
 ```
 
+## Development ##
+
+Contributions are welcome!
+
+### Upgrading Prost ###
+
+When upgrading Prost to the latest version, make sure to also run `wkt-types/resources/update.sh` script. This will
+grab the latest source files from `prost-types` and merge them into `prost-wkt-types` at build time. After the script
+has run, be sure to validate that the selected line numbers in functions `process_prost_types_lib` and
+`process_prost_types_datetime` in the `wkt-types/build.rs` are still correct!
+
+Please see `wkt-types/README.md` for more info.
+
 ## License ##
 
 `prost-wkt` is distributed under the terms of the Apache License (Version 2.0).

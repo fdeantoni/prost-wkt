@@ -22,7 +22,7 @@ fn main() {
 fn build(dir: &Path, proto: &str) {
     let out = dir.join(proto);
     create_dir_all(&out).unwrap();
-    let source = format!("proto/{}.proto", proto);
+    let source = format!("proto/{proto}.proto");
     let descriptor_file = out.join("descriptors.bin");
     let mut prost_build = prost_build::Config::new();
     prost_build

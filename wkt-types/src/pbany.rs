@@ -39,13 +39,13 @@ impl std::fmt::Display for AnyError {
 
 impl From<prost::DecodeError> for AnyError {
     fn from(error: DecodeError) -> Self {
-        AnyError::new(format!("Error decoding message: {:?}", error))
+        AnyError::new(format!("Error decoding message: {error:?}"))
     }
 }
 
 impl From<prost::EncodeError> for AnyError {
     fn from(error: prost::EncodeError) -> Self {
-        AnyError::new(format!("Error encoding message: {:?}", error))
+        AnyError::new(format!("Error encoding message: {error:?}"))
     }
 }
 
@@ -153,7 +153,7 @@ impl<'de> Deserialize<'de> for Any {
             serde::de::Deserialize::deserialize(deserializer)?;
         let type_url = erased.type_url().to_string();
         let value = erased.try_encoded().map_err(|err| {
-            serde::de::Error::custom(format!("Failed to encode message: {:?}", err))
+            serde::de::Error::custom(format!("Failed to encode message: {err:?}"))
         })?;
         Ok(Any { type_url, value })
     }
@@ -215,9 +215,9 @@ mod tests {
             string: "Hello World!".to_string(),
         };
         let any = Any::try_pack(msg.clone()).unwrap();
-        println!("{:?}", any);
+        println!("{any:?}");
         let unpacked = any.unpack_as(Foo::default()).unwrap();
-        println!("{:?}", unpacked);
+        println!("{unpacked:?}");
         assert_eq!(unpacked, msg)
     }
 
@@ -227,7 +227,7 @@ mod tests {
             string: "Hello World!".to_string(),
         };
         let any = Any::try_pack(msg.clone()).unwrap();
-        println!("{:?}", any);
+        println!("{any:?}");
         let unpacked: &dyn MessageSerde = &any.unpack_as(Foo::default()).unwrap();
         let downcast = unpacked.downcast_ref::<Foo>().unwrap();
         assert_eq!(downcast, &msg);
@@ -242,7 +242,7 @@ mod tests {
         });
         let erased: Box<dyn MessageSerde> = serde_json::from_value(data).unwrap();
         let foo: &Foo = erased.downcast_ref::<Foo>().unwrap();
-        println!("Deserialize default: {:?}", foo);
+        println!("Deserialize default: {foo:?}");
         assert_eq!(foo, &Foo::default())
     }
 }

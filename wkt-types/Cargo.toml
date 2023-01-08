@@ -9,7 +9,7 @@ readme = "../README.md"
 documentation = "https://docs.rs/prost-wkt"
 keywords = ["protobuf", "serde", "json"]
 categories = ["encoding"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 doctest = false

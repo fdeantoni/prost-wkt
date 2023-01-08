@@ -7,7 +7,7 @@ repository = "https://github.com/fdeantoni/prost-wkt"
 description = "Helper crate for prost to allow JSON serialization and deserialization of Well Known Types."
 readme = "README.md"
 documentation = "https://docs.rs/prost-wkt-derive"
-edition = "2018"
+edition = "2021"
 
 [workspace]
 members = [ "wkt-build", "wkt-types", "example" ]

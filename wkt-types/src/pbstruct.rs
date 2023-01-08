@@ -315,21 +315,21 @@ mod tests {
     #[test]
     fn conversion_test() {
         let number: Value = Value::from(10.0);
-        println!("Number: {:?}", number);
+        println!("Number: {number:?}");
         let null: Value = Value::null();
-        println!("Null: {:?}", null);
+        println!("Null: {null:?}");
         let string: Value = Value::from(String::from("Hello"));
-        println!("String: {:?}", string);
+        println!("String: {string:?}");
         let list = vec![Value::null(), Value::from(100.0)];
         let pb_list: Value = Value::from(list);
-        println!("List: {:?}", pb_list);
+        println!("List: {pb_list:?}");
         let mut map: HashMap<String, Value> = HashMap::new();
         map.insert(String::from("number"), number);
         map.insert(String::from("null"), null);
         map.insert(String::from("string"), string);
         map.insert(String::from("list"), pb_list);
         let pb_struct: Value = Value::from(map);
-        println!("Struct: {:?}", pb_struct);
+        println!("Struct: {pb_struct:?}");
     }
 
     #[test]
@@ -352,7 +352,7 @@ mod tests {
           }"#;
         let sj: serde_json::Value = serde_json::from_str(data).unwrap();
         let pj: Value = serde_json::from_value(sj.clone()).unwrap();
-        println!("prost_wkt_types Value: {:?}", pj);
+        println!("prost_wkt_types Value: {pj:?}");
         let string: String = serde_json::to_string(&pj).unwrap();
         let back: serde_json::Value = serde_json::from_str(&string).unwrap();
         assert_eq!(sj, back);

@@ -22,7 +22,7 @@ fn main() -> Result<(), AnyError> {
 
     let json = serde_json::to_string_pretty(&request).expect("Failed to serialize request");
 
-    println!("JSON:\n{}", json);
+    println!("JSON:\n{json}");
 
     let back: Request = serde_json::from_str(&json).expect("Failed to deserialize request");
 
@@ -31,7 +31,7 @@ fn main() -> Result<(), AnyError> {
         let unpacked_foo: &Foo = unpacked
             .downcast_ref::<Foo>()
             .expect("Failed to downcast message");
-        println!("Unpacked: {:?}", unpacked_foo);
+        println!("Unpacked: {unpacked_foo:?}");
     }
     Ok(())
 }

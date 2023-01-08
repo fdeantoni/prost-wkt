@@ -110,7 +110,7 @@ fn test_any_serialization() {
     );
     let erased = &msg as &dyn MessageSerde;
     let json = serde_json::to_string(erased).unwrap();
-    println!("Erased json: {}", json);
+    println!("Erased json: {json}");
 }
 
 #[test]
@@ -132,7 +132,7 @@ fn test_any_deserialize_string() {
             "list": []
           }"#;
     let msg: Foo = serde_json::from_str(data).unwrap();
-    println!("Deserialized from string: {:?}", msg);
+    println!("Deserialized from string: {msg:?}");
 }
 
 #[test]
@@ -159,7 +159,7 @@ fn test_any_serialize_deserialize() {
     };
 
     let json = serde_json::to_string(&original).unwrap();
-    println!("Serialized Foo: {}", json);
+    println!("Serialized Foo: {json}");
     let back: Foo = serde_json::from_str(&json).unwrap();
     println!("Deserialized Foo: {:?}", &back);
     assert_eq!(back, original)
@@ -179,6 +179,6 @@ fn test_any_unpack() {
     let any = prost_wkt_types::Any::try_pack(payload).unwrap();
     let unpacked = any.try_unpack().unwrap();
     let foo = unpacked.downcast_ref::<Foo>().unwrap();
-    println!("Unpacked: {:?}", foo);
+    println!("Unpacked: {foo:?}");
     assert_eq!(foo.string, "hello payload");
 }

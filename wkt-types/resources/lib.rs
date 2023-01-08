@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/prost-types/0.11.2")]
+#![doc(html_root_url = "https://docs.rs/prost-types/0.11.5")]
 
 //! Protocol Buffers well-known types.
 //!
@@ -142,6 +142,7 @@ impl fmt::Display for Duration {
 }
 
 /// A duration handling error.
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Debug, PartialEq)]
 #[non_exhaustive]
 pub enum DurationError {
@@ -315,6 +316,7 @@ impl From<std::time::SystemTime> for Timestamp {
 }
 
 /// A timestamp handling error.
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Debug, PartialEq)]
 #[non_exhaustive]
 pub enum TimestampError {

@@ -11,7 +11,6 @@ use serde::ser::{Serialize, Serializer};
 include!(concat!(env!("OUT_DIR"), "/pbtime/google.protobuf.rs"));
 include!(concat!(env!("OUT_DIR"), "/prost_snippet.rs"));
 
-
 /// Converts chrono's `NaiveDateTime` to `Timestamp`..
 impl From<NaiveDateTime> for Timestamp {
     fn from(dt: NaiveDateTime) -> Self {

@@ -350,11 +350,11 @@ mod tests {
             },
             "list": []
           }"#;
-          let sj: serde_json::Value = serde_json::from_str(data).unwrap();
-          let pj: Value = serde_json::from_value(sj.clone()).unwrap();
-          println!("prost_wkt_types Value: {:?}", pj);
-          let string: String = serde_json::to_string(&pj).unwrap();
-          let back: serde_json::Value = serde_json::from_str(&string).unwrap();
-          assert_eq!(sj, back);
+        let sj: serde_json::Value = serde_json::from_str(data).unwrap();
+        let pj: Value = serde_json::from_value(sj.clone()).unwrap();
+        println!("prost_wkt_types Value: {:?}", pj);
+        let string: String = serde_json::to_string(&pj).unwrap();
+        let back: serde_json::Value = serde_json::from_str(&string).unwrap();
+        assert_eq!(sj, back);
     }
 }

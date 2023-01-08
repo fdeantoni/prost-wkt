@@ -10,9 +10,7 @@ use prost_types::FileDescriptorSet;
 
 use regex::Regex;
 
-
 fn main() {
-
     let dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     process_prost_pbtime(&dir);
 
@@ -64,7 +62,10 @@ fn process_prost_types_lib(dir: &Path) {
     }
 
     let file = dir.join("prost_snippet.rs");
-    File::create(file).unwrap().write_all(string.as_bytes()).unwrap();
+    File::create(file)
+        .unwrap()
+        .write_all(string.as_bytes())
+        .unwrap();
 }
 
 fn process_prost_types_datetime(dir: &Path) {
@@ -80,5 +81,8 @@ fn process_prost_types_datetime(dir: &Path) {
     let re = Regex::new(r"crate").unwrap();
     let result = re.replace_all(&string, "super").to_string();
     let file = dir.join("datetime.rs");
-    File::create(file).unwrap().write_all(result.as_bytes()).unwrap();
+    File::create(file)
+        .unwrap()
+        .write_all(result.as_bytes())
+        .unwrap();
 }

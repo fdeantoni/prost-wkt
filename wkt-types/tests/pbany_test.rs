@@ -43,13 +43,6 @@ impl prost_wkt::MessageSerde for Foo {
         Ok(erased)
     }
 
-    fn encoded(&self) -> Vec<u8> {
-        let mut buf = Vec::new();
-        buf.reserve(Message::encoded_len(self));
-        Message::encode(self, &mut buf).unwrap();
-        buf
-    }
-
     fn try_encoded(&self) -> Result<Vec<u8>, EncodeError> {
         let mut buf = Vec::new();
         buf.reserve(Message::encoded_len(self));

@@ -73,12 +73,6 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
                     let erased: Box<dyn ::prost_wkt::MessageSerde> = Box::new(target);
                     Ok(erased)
                 }
-                fn encoded(&self) -> Vec<u8> {
-                    let mut buf = Vec::new();
-                    buf.reserve(::prost::Message::encoded_len(self));
-                    ::prost::Message::encode(self, &mut buf).expect("Failed to encode message");
-                    buf
-                }
                 fn try_encoded(&self) -> Result<Vec<u8>, ::prost::EncodeError> {
                     let mut buf = Vec::new();
                     buf.reserve(::prost::Message::encoded_len(self));

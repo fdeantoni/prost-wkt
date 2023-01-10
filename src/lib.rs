@@ -14,9 +14,6 @@ pub trait MessageSerde: prost::Message + std::any::Any {
     /// Creates a new instance of this message using the protobuf encoded data
     fn new_instance(&self, data: Vec<u8>) -> Result<Box<dyn MessageSerde>, prost::DecodeError>;
     /// Returns the encoded protobuf message as bytes
-    #[deprecated(since = "0.3.0", note = "please use `try_encoded` instead")]
-    fn encoded(&self) -> Vec<u8>;
-    /// Returns the encoded protobuf message as bytes
     fn try_encoded(&self) -> Result<Vec<u8>, prost::EncodeError>;
 }
 

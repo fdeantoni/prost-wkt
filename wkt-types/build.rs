@@ -28,9 +28,7 @@ fn build(dir: &Path, proto: &str) {
     let mut prost_build = prost_build::Config::new();
     prost_build
         .compile_well_known_types()
-        .type_attribute("google.protobuf.Struct","#[derive(serde_derive::Serialize, serde_derive::Deserialize)] #[serde(default, rename_all=\"camelCase\")]")
-        .type_attribute("google.protobuf.ListValue","#[derive(serde_derive::Serialize, serde_derive::Deserialize)] #[serde(default, rename_all=\"camelCase\")]")
-        .type_attribute("google.protobuf.Duration","#[derive(serde_derive::Serialize, serde_derive::Deserialize)] #[serde(default, rename_all=\"camelCase\")]")
+        .type_attribute("google.protobuf.Duration","#[derive(serde_derive::Serialize, serde_derive::Deserialize)] #[serde(default)]")
         .type_attribute("google.protobuf.Empty","#[derive(serde_derive::Serialize, serde_derive::Deserialize)]")
         .file_descriptor_set_path(&descriptor_file)
         .out_dir(&out)

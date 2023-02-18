@@ -99,6 +99,18 @@ mod tests {
     use chrono::{DateTime, Utc};
 
     #[test]
+    fn serialize_duration() {
+        let duration = Duration {
+            seconds: 10,
+            nanos: 100,
+        };
+        let json = serde_json::to_string_pretty(&duration).expect("json");
+        println!("{json}");
+        let back: Duration = serde_json::from_str(&json).expect("duration");
+        assert_eq!(duration, back);
+    }
+
+    #[test]
     fn invalid_timestamp_test() {
         let ts = Timestamp {
             seconds: 10,

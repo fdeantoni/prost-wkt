@@ -15,7 +15,7 @@ pub struct Foo {
     #[prost(bool, tag = "3")]
     pub boolean: bool,
     #[prost(message, optional, tag = "4")]
-    pub data: ::std::option::Option<::prost_wkt_types::Value>,
+    pub value_data: ::std::option::Option<::prost_wkt_types::Value>,
     #[prost(string, repeated, tag = "5")]
     pub list: ::std::vec::Vec<std::string::String>,
     #[prost(message, optional, tag = "6")]
@@ -81,7 +81,7 @@ fn test_any_serialization() {
         string: String::from("inner"),
         timestamp: None,
         boolean: false,
-        data: Some(create_struct()),
+        value_data: Some(create_struct()),
         list: vec!["een".to_string(), "twee".to_string()],
         payload: None,
     };
@@ -93,7 +93,7 @@ fn test_any_serialization() {
             nanos: 42,
         }),
         boolean: true,
-        data: Some(prost_wkt_types::Value::from("world".to_string())),
+        value_data: Some(prost_wkt_types::Value::from("world".to_string())),
         list: vec!["one".to_string(), "two".to_string()],
         payload: prost_wkt_types::Any::try_pack(inner).ok(),
     };
@@ -112,7 +112,7 @@ fn test_any_deserialize_string() {
             "string":"hello",
             "timestamp":"1970-01-01T00:01:39.000000042Z",
             "boolean":true,
-            "data": {
+            "valueData": {
               "test_number": 1,
               "test_bool": true,
               "test_string": "hi there",
@@ -126,6 +126,8 @@ fn test_any_deserialize_string() {
           }"#;
     let msg: Foo = serde_json::from_str(data).unwrap();
     println!("Deserialized from string: {msg:?}");
+    let serialized = serde_json::to_string_pretty(&msg).expect("serialized Foo");
+    println!("{serialized}")
 }
 
 #[test]
@@ -134,7 +136,7 @@ fn test_any_serialize_deserialize() {
         string: String::from("inner"),
         timestamp: None,
         boolean: false,
-        data: None,
+        value_data: None,
         list: vec!["een".to_string(), "twee".to_string()],
         payload: None,
     };
@@ -146,7 +148,7 @@ fn test_any_serialize_deserialize() {
             nanos: 42,
         }),
         boolean: true,
-        data: Some(prost_wkt_types::Value::from("world".to_string())),
+        value_data: Some(prost_wkt_types::Value::from("world".to_string())),
         list: vec!["one".to_string(), "two".to_string()],
         payload: prost_wkt_types::Any::try_pack(inner).ok(),
     };
@@ -165,7 +167,7 @@ fn test_any_unpack() {
         string: String::from("hello payload"),
         timestamp: None,
         boolean: false,
-        data: None,
+        value_data: None,
         list: vec!["een".to_string(), "twee".to_string()],
         payload: None,
     };

@@ -181,6 +181,32 @@ impl TryFrom<Value> for std::vec::Vec<Value> {
     }
 }
 
+impl Serialize for ListValue {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(self.values.len()))?;
+        for e in &self.values {
+            seq.serialize_element(e)?;
+        }
+        seq.end()
+    }
+}
+
+impl Serialize for Struct {
+    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
+    where
+        S: Serializer,
+    {
+        let mut map = serializer.serialize_map(Some(self.fields.len()))?;
+        for (k, v) in &self.fields {
+            map.serialize_entry( k, v)?;
+        }
+        map.end()
+    }
+}
+
 impl Serialize for Value {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
@@ -192,21 +218,75 @@ impl Serialize for Value {
             Some(value::Kind::BoolValue(boolean)) => serializer.serialize_bool(*boolean),
             Some(value::Kind::NullValue(_)) => serializer.serialize_none(),
             Some(value::Kind::ListValue(list)) => {
-                let mut seq = serializer.serialize_seq(Some(list.values.len()))?;
-                for e in list.clone().values {
-                    seq.serialize_element(&e)?;
-                }
-                seq.end()
+                list.serialize(serializer)
             }
             Some(value::Kind::StructValue(object)) => {
-                let mut map = serializer.serialize_map(Some(object.fields.len()))?;
-                for (k, v) in object.clone().fields {
-                    map.serialize_entry(&k, &v)?;
-                }
-                map.end()
+                object.serialize(serializer)
             }
             _ => serializer.serialize_none(),
         }
+    }
+}
+
+struct ListValueVisitor;
+impl<'de> Visitor<'de> for ListValueVisitor {
+    type Value = crate::ListValue;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a prost_wkt_types::ListValue struct")
+    }
+
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
+        let mut values: Vec<Value> = Vec::new();
+        while let Some(el) = seq.next_element()? {
+            values.push(el)
+        }
+        Ok(ListValue {
+            values
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for ListValue {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_seq(ListValueVisitor)
+    }
+}
+
+struct StructVisitor;
+impl<'de> Visitor<'de> for StructVisitor {
+    type Value = crate::Struct;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a prost_wkt_types::Struct struct")
+    }
+
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+    where
+        A: MapAccess<'de>,
+    {
+        let mut fields: std::collections::HashMap<String, Value> =
+            std::collections::HashMap::new();
+        while let Some((key, value)) = map.next_entry::<String, Value>()? {
+            fields.insert(key, value);
+        }
+        Ok(Struct {
+            fields
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for Struct {
+    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
+        where
+            D: Deserializer<'de> {
+        deserializer.deserialize_map(StructVisitor)
     }
 }
 
@@ -221,7 +301,7 @@ impl<'de> Deserialize<'de> for Value {
             type Value = crate::Value;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("a prost_types::Value struct")
+                formatter.write_str("a prost_wkt_types::Value struct")
             }
 
             fn visit_bool<E>(self, value: bool) -> Result<Self::Value, E>
@@ -280,27 +360,24 @@ impl<'de> Deserialize<'de> for Value {
                 Ok(Value::null())
             }
 
-            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
             where
                 A: SeqAccess<'de>,
             {
-                let mut values: Vec<Value> = Vec::new();
-                while let Some(el) = seq.next_element()? {
-                    values.push(el)
-                }
-                Ok(Value::from(values))
+                ListValueVisitor.visit_seq(seq).map(|lv| {
+                    let kind = Some(value::Kind::ListValue(lv));
+                    Value { kind }
+                })
             }
 
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
             where
                 A: MapAccess<'de>,
             {
-                let mut fields: std::collections::HashMap<String, Value> =
-                    std::collections::HashMap::new();
-                while let Some((key, value)) = map.next_entry()? {
-                    fields.insert(key, value);
-                }
-                Ok(Value::from(fields))
+                StructVisitor.visit_map(map).map(|s| {
+                    let kind = Some(value::Kind::StructValue(s));
+                    Value { kind }
+                })
             }
         }
         deserializer.deserialize_any(ValueVisitor)
@@ -324,8 +401,8 @@ mod tests {
         let pb_list: Value = Value::from(list);
         println!("List: {pb_list:?}");
         let mut map: HashMap<String, Value> = HashMap::new();
-        map.insert(String::from("number"), number);
-        map.insert(String::from("null"), null);
+        map.insert(String::from("some_number"), number);
+        map.insert(String::from("a_null_value"), null);
         map.insert(String::from("string"), string);
         map.insert(String::from("list"), pb_list);
         let pb_struct: Value = Value::from(map);
@@ -341,9 +418,9 @@ mod tests {
             "data": {
               "test_number": 1.0,
               "test_bool": true,
-              "test_string": "hi there",
-              "test_list": [1.0, 2.0, 3.0, 4.0],
-              "test_inner_struct": {
+              "testString": "hi there",
+              "testList": [1.0, 2.0, 3.0, 4.0],
+              "testInnerStruct": {
                 "one": 1.0,
                 "two": 2.0
               }
@@ -351,9 +428,10 @@ mod tests {
             "list": []
           }"#;
         let sj: serde_json::Value = serde_json::from_str(data).unwrap();
+        println!("serde_json::Value: {sj:#?}");
         let pj: Value = serde_json::from_value(sj.clone()).unwrap();
-        println!("prost_wkt_types Value: {pj:?}");
-        let string: String = serde_json::to_string(&pj).unwrap();
+        let string: String = serde_json::to_string_pretty(&pj).unwrap();
+        println!("prost_wkt_types String: {string}");
         let back: serde_json::Value = serde_json::from_str(&string).unwrap();
         assert_eq!(sj, back);
     }

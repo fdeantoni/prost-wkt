@@ -17,6 +17,7 @@ fn main() {
     build(&dir, "pbtime");
     build(&dir, "pbstruct");
     build(&dir, "pbany");
+    build(&dir, "pbempty");
 }
 
 fn build(dir: &Path, proto: &str) {
@@ -30,6 +31,7 @@ fn build(dir: &Path, proto: &str) {
         .type_attribute("google.protobuf.Struct","#[derive(serde_derive::Serialize, serde_derive::Deserialize)] #[serde(default, rename_all=\"camelCase\")]")
         .type_attribute("google.protobuf.ListValue","#[derive(serde_derive::Serialize, serde_derive::Deserialize)] #[serde(default, rename_all=\"camelCase\")]")
         .type_attribute("google.protobuf.Duration","#[derive(serde_derive::Serialize, serde_derive::Deserialize)] #[serde(default, rename_all=\"camelCase\")]")
+        .type_attribute("google.protobuf.Empty","#[derive(serde_derive::Serialize, serde_derive::Deserialize)]")
         .file_descriptor_set_path(&descriptor_file)
         .out_dir(&out)
         .compile_protos(

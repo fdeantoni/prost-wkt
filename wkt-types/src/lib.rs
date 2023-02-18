@@ -9,4 +9,7 @@ pub use crate::pbstruct::*;
 mod pbany;
 pub use crate::pbany::*;
 
+mod pbempty;
+pub use crate::pbempty::*;
+
 pub use prost_wkt::MessageSerde;

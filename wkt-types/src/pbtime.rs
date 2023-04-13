@@ -46,6 +46,23 @@ impl From<Timestamp> for DateTime<Utc> {
     }
 }
 
+/// Converts proto duration to chrono's Duration
+impl From<Duration> for chrono::Duration {
+    fn from(val: Duration) -> Self {
+        chrono::Duration::seconds(val.seconds) + chrono::Duration::nanoseconds(val.nanos as i64)
+    }
+}
+
+/// Converts chrono Duration to proto duration
+impl From<chrono::Duration> for Duration {
+    fn from(val: chrono::Duration) -> Self {
+        Duration {
+            seconds: val.num_seconds(),
+            nanos: (val.num_nanoseconds().unwrap() % 1_000_000_000) as i32,
+        }
+    }
+}
+
 impl Serialize for Timestamp {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
@@ -119,5 +136,24 @@ mod tests {
         let datetime_utc: DateTime<Utc> = ts.into();
 
         println!("{datetime_utc:?}");
+    }
+
+    #[test]
+    fn test_duration_conversion_pb_to_chrono() {
+        let duration = Duration {
+            seconds: 10,
+            nanos: 100,
+        };
+        let chrono_duration: chrono::Duration = duration.into();
+        assert_eq!(chrono_duration.num_seconds(), 10);
+        assert_eq!((chrono_duration - chrono::Duration::seconds(10)).num_nanoseconds(), Some(100));
+    }
+
+    #[test]
+    fn test_duration_conversion_chrono_to_pb() {
+        let chrono_duration = chrono::Duration::seconds(10) + chrono::Duration::nanoseconds(100);
+        let duration: Duration = chrono_duration.into();
+        assert_eq!(duration.seconds, 10);
+        assert_eq!(duration.nanos, 100);
     }
 }

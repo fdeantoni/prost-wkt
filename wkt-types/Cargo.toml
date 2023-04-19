@@ -17,6 +17,7 @@ doctest = false
 [features]
 default = ["std"]
 std = []
+vendored-protoc = ["protobuf-src"]
 
 [dependencies]
 prost-wkt = { version = "0.4.1", path = ".." }
@@ -32,3 +33,4 @@ prost-types = "0.11.5"
 prost-build = "0.11.5"
 prost-wkt-build = { version = "0.4.1", path = "../wkt-build" }
 regex = "1"
+protobuf-src = { version = "1.1.0", optional = true }

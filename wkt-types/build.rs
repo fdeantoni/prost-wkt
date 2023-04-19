@@ -11,6 +11,9 @@ use prost_types::FileDescriptorSet;
 use regex::Regex;
 
 fn main() {
+    #[cfg(feature = "vendored-protoc")]
+    std::env::set_var("PROTOC", protobuf_src::protoc());
+
     let dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     process_prost_pbtime(&dir);
 

@@ -29,6 +29,14 @@ fn build(dir: &Path, proto: &str) {
     let source = format!("proto/{proto}.proto");
     let descriptor_file = out.join("descriptors.bin");
     let mut prost_build = prost_build::Config::new();
+    
+    #[cfg(feature = "vendored-protox")]
+    {
+        let file_descriptors = protox::compile(&[source.clone()], &["proto/".to_string()]).unwrap();
+        std::fs::write(&descriptor_file, file_descriptors.encode_to_vec()).unwrap();
+        prost_build.skip_protoc_run();
+    }
+    
     prost_build
         .compile_well_known_types()
         .type_attribute("google.protobuf.Duration","#[derive(serde_derive::Serialize, serde_derive::Deserialize)] #[serde(default)]")

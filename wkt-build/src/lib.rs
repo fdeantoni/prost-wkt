@@ -67,14 +67,14 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
                 fn type_url(&self) -> &'static str {
                     #type_url
                 }
-                fn new_instance(&self, data: Vec<u8>) -> Result<Box<dyn ::prost_wkt::MessageSerde>, ::prost::DecodeError> {
+                fn new_instance(&self, data: Vec<u8>) -> ::std::result::Result<Box<dyn ::prost_wkt::MessageSerde>, ::prost::DecodeError> {
                     let mut target = Self::default();
                     ::prost::Message::merge(&mut target, data.as_slice())?;
-                    let erased: Box<dyn ::prost_wkt::MessageSerde> = Box::new(target);
+                    let erased: ::std::boxed::Box<dyn ::prost_wkt::MessageSerde> = ::std::boxed::Box::new(target);
                     Ok(erased)
                 }
-                fn try_encoded(&self) -> Result<Vec<u8>, ::prost::EncodeError> {
-                    let mut buf = Vec::new();
+                fn try_encoded(&self) -> ::std::result::Result<::std::vec::Vec<u8>, ::prost::EncodeError> {
+                    let mut buf = ::std::vec::Vec::new();
                     buf.reserve(::prost::Message::encoded_len(self));
                     ::prost::Message::encode(self, &mut buf)?;
                     Ok(buf)
@@ -86,7 +86,7 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
                     type_url: #type_url,
                     decoder: |buf: &[u8]| {
                         let msg: #type_name = ::prost::Message::decode(buf)?;
-                        Ok(Box::new(msg))
+                        Ok(::std::boxed::Box::new(msg))
                     }
                 }
             }

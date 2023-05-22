@@ -65,8 +65,10 @@ fn process_prost_pbtime(dir: &Path) {
 fn process_prost_types_lib(dir: &Path) {
     let source: String = std::fs::read_to_string("./resources/lib.rs").unwrap();
     let lines: Vec<&str> = source.split('\n').collect();
-    let selection = &lines[25..402];
+    let selection = &lines[28..423];
     let mut string = String::new();
+    string.push_str("mod datetime;");
+    string.push('\n');
     for line in selection {
         string.push_str(line);
         string.push('\n');

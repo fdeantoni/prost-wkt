@@ -12,4 +12,7 @@ pub use crate::pbany::*;
 mod pbempty;
 pub use crate::pbempty::*;
 
+mod pbmask;
+pub use crate::pbmask::*;
+
 pub use prost_wkt::MessageSerde;

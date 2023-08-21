@@ -16,7 +16,7 @@ fn main() -> Result<(), AnyError> {
     };
 
     let mut request: Request = Request::default();
-    let any = Any::try_pack(foo_msg)?;
+    let any = Any::try_pack(&foo_msg)?;
     request.request_id = "test1".to_string();
     request.payload = Some(any);
 

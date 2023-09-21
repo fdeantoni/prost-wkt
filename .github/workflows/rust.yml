@@ -13,7 +13,7 @@ jobs:
           - windows-latest
         rust:
           - stable
-          - 1.62.0
+          - 1.63.0
 
     steps:
       - uses: actions/checkout@v2

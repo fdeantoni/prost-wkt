@@ -42,7 +42,7 @@ impl From<Timestamp> for DateTime<Utc> {
         value.normalize();
         let dt = NaiveDateTime::from_timestamp_opt(value.seconds, value.nanos as u32)
             .expect("invalid or out-of-range datetime");
-        DateTime::from_utc(dt, Utc)
+        DateTime::from_naive_utc_and_offset(dt, Utc)
     }
 }
 

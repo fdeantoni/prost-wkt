@@ -74,8 +74,7 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
                     Ok(erased)
                 }
                 fn try_encoded(&self) -> ::std::result::Result<::std::vec::Vec<u8>, ::prost::EncodeError> {
-                    let mut buf = ::std::vec::Vec::new();
-                    buf.reserve(::prost::Message::encoded_len(self));
+                    let mut buf = ::std::vec::Vec::with_capacity(::prost::Message::encoded_len(self));
                     ::prost::Message::encode(self, &mut buf)?;
                     Ok(buf)
                 }
@@ -88,6 +87,15 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
                         let msg: #type_name = ::prost::Message::decode(buf)?;
                         Ok(::std::boxed::Box::new(msg))
                     }
+                }
+            }
+
+            impl ::prost::Name for #type_name {
+                const PACKAGE: &'static str = #package_name;
+                const NAME: &'static str = #message_name;
+
+                fn type_url() -> String {
+                    #type_url.to_string()
                 }
             }
         };

@@ -11,4 +11,4 @@ DATETIME_FILE="${REPO}/src/datetime.rs"
 curl --silent ${LIB_FILE} > ${RESOURCES}/lib.rs
 curl --silent ${DATETIME_FILE} > ${RESOURCES}/datetime.rs
 
-printf "\n!! Please update ${WORKSPACE}/wkt-types/build.rs to reflect new lib.rs !!\n\n"
+printf "\n!! Please update ${WORKSPACE}/wkt-types/src/pbtime to reflect new lib.rs and datetime.rs !!\n\n"

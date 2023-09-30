@@ -1,6 +1,10 @@
 //! A date/time type which exists primarily to convert [`Timestamp`]s into an RFC 3339 formatted
 //! string.
 
+////////////////////////////////////////////////////////////////////////////////
+/// FROM prost-types/src/datetime.rs
+////////////////////////////////////////////////////////////////////////////////
+
 use core::fmt;
 
 use crate::Duration;
@@ -558,7 +562,7 @@ pub(crate) fn parse_duration(s: &str) -> Option<Duration> {
 
     let s = parse_char(s, b's')?;
     ensure!(s.is_empty());
-    ensure!(nanos < crate::NANOS_PER_SECOND as u32);
+    ensure!(nanos < super::NANOS_PER_SECOND as u32);
 
     // If the duration is negative, also flip the nanos sign.
     let (seconds, nanos) = if is_negative {
@@ -569,7 +573,7 @@ pub(crate) fn parse_duration(s: &str) -> Option<Duration> {
 
     Some(Duration {
         seconds,
-        nanos: nanos as i32,
+        nanos,
     })
 }
 
@@ -580,288 +584,6 @@ impl From<DateTime> for Timestamp {
         Timestamp {
             seconds,
             nanos: nanos as i32,
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use proptest::prelude::*;
-
-    #[test]
-    fn test_min_max() {
-        assert_eq!(
-            DateTime::MIN,
-            DateTime::from(Timestamp {
-                seconds: i64::MIN,
-                nanos: 0
-            }),
-        );
-        assert_eq!(
-            DateTime::MAX,
-            DateTime::from(Timestamp {
-                seconds: i64::MAX,
-                nanos: 999_999_999
-            }),
-        );
-    }
-
-    #[cfg(feature = "std")]
-    #[test]
-    fn test_datetime_from_timestamp() {
-        let case = |expected: &str, secs: i64, nanos: i32| {
-            let timestamp = Timestamp {
-                seconds: secs,
-                nanos,
-            };
-            assert_eq!(
-                expected,
-                format!("{}", DateTime::from(timestamp.clone())),
-                "timestamp: {:?}",
-                timestamp
-            );
-        };
-
-        // Mostly generated with:
-        //  - date -jur <secs> +"%Y-%m-%dT%H:%M:%S.000000000Z"
-        //  - http://unixtimestamp.50x.eu/
-
-        case("1970-01-01T00:00:00Z", 0, 0);
-
-        case("1970-01-01T00:00:00.000000001Z", 0, 1);
-        case("1970-01-01T00:00:00.123450Z", 0, 123_450_000);
-        case("1970-01-01T00:00:00.050Z", 0, 50_000_000);
-        case("1970-01-01T00:00:01.000000001Z", 1, 1);
-        case("1970-01-01T00:01:01.000000001Z", 60 + 1, 1);
-        case("1970-01-01T01:01:01.000000001Z", 60 * 60 + 60 + 1, 1);
-        case(
-            "1970-01-02T01:01:01.000000001Z",
-            24 * 60 * 60 + 60 * 60 + 60 + 1,
-            1,
-        );
-
-        case("1969-12-31T23:59:59Z", -1, 0);
-        case("1969-12-31T23:59:59.000001Z", -1, 1_000);
-        case("1969-12-31T23:59:59.500Z", -1, 500_000_000);
-        case("1969-12-31T23:58:59.000001Z", -60 - 1, 1_000);
-        case("1969-12-31T22:58:59.000001Z", -60 * 60 - 60 - 1, 1_000);
-        case(
-            "1969-12-30T22:58:59.000000001Z",
-            -24 * 60 * 60 - 60 * 60 - 60 - 1,
-            1,
-        );
-
-        case("2038-01-19T03:14:07Z", i32::MAX as i64, 0);
-        case("2038-01-19T03:14:08Z", i32::MAX as i64 + 1, 0);
-        case("1901-12-13T20:45:52Z", i32::MIN as i64, 0);
-        case("1901-12-13T20:45:51Z", i32::MIN as i64 - 1, 0);
-
-        // Skipping these tests on windows as std::time::SystemTime range is low
-        // on Windows compared with that of Unix which can cause the following
-        // high date value tests to panic
-        #[cfg(not(target_os = "windows"))]
-        {
-            case("+292277026596-12-04T15:30:07Z", i64::MAX, 0);
-            case("+292277026596-12-04T15:30:06Z", i64::MAX - 1, 0);
-            case("-292277022657-01-27T08:29:53Z", i64::MIN + 1, 0);
-        }
-
-        case("1900-01-01T00:00:00Z", -2_208_988_800, 0);
-        case("1899-12-31T23:59:59Z", -2_208_988_801, 0);
-        case("0000-01-01T00:00:00Z", -62_167_219_200, 0);
-        case("-0001-12-31T23:59:59Z", -62_167_219_201, 0);
-
-        case("1234-05-06T07:08:09Z", -23_215_049_511, 0);
-        case("-1234-05-06T07:08:09Z", -101_097_651_111, 0);
-        case("2345-06-07T08:09:01Z", 11_847_456_541, 0);
-        case("-2345-06-07T08:09:01Z", -136_154_620_259, 0);
-    }
-
-    #[test]
-    fn test_parse_timestamp() {
-        // RFC 3339 Section 5.8 Examples
-        assert_eq!(
-            "1985-04-12T23:20:50.52Z".parse::<Timestamp>(),
-            Timestamp::date_time_nanos(1985, 4, 12, 23, 20, 50, 520_000_000),
-        );
-        assert_eq!(
-            "1996-12-19T16:39:57-08:00".parse::<Timestamp>(),
-            Timestamp::date_time(1996, 12, 20, 0, 39, 57),
-        );
-        assert_eq!(
-            "1996-12-19T16:39:57-08:00".parse::<Timestamp>(),
-            Timestamp::date_time(1996, 12, 20, 0, 39, 57),
-        );
-        assert_eq!(
-            "1990-12-31T23:59:60Z".parse::<Timestamp>(),
-            Timestamp::date_time(1990, 12, 31, 23, 59, 59),
-        );
-        assert_eq!(
-            "1990-12-31T15:59:60-08:00".parse::<Timestamp>(),
-            Timestamp::date_time(1990, 12, 31, 23, 59, 59),
-        );
-        assert_eq!(
-            "1937-01-01T12:00:27.87+00:20".parse::<Timestamp>(),
-            Timestamp::date_time_nanos(1937, 1, 1, 11, 40, 27, 870_000_000),
-        );
-
-        // Date
-        assert_eq!(
-            "1937-01-01".parse::<Timestamp>(),
-            Timestamp::date(1937, 1, 1),
-        );
-
-        // Negative year
-        assert_eq!(
-            "-0008-01-01".parse::<Timestamp>(),
-            Timestamp::date(-8, 1, 1),
-        );
-
-        // Plus year
-        assert_eq!(
-            "+19370-01-01".parse::<Timestamp>(),
-            Timestamp::date(19370, 1, 1),
-        );
-
-        // Full nanos
-        assert_eq!(
-            "2020-02-03T01:02:03.123456789Z".parse::<Timestamp>(),
-            Timestamp::date_time_nanos(2020, 2, 3, 1, 2, 3, 123_456_789),
-        );
-
-        // Leap day
-        assert_eq!(
-            "2020-02-29T01:02:03.00Z".parse::<Timestamp>().unwrap(),
-            Timestamp::from(DateTime {
-                year: 2020,
-                month: 2,
-                day: 29,
-                hour: 1,
-                minute: 2,
-                second: 3,
-                nanos: 0,
-            }),
-        );
-
-        // Test extensions to RFC 3339.
-        // ' ' instead of 'T' as date/time separator.
-        assert_eq!(
-            "1985-04-12 23:20:50.52Z".parse::<Timestamp>(),
-            Timestamp::date_time_nanos(1985, 4, 12, 23, 20, 50, 520_000_000),
-        );
-
-        // No time zone specified.
-        assert_eq!(
-            "1985-04-12T23:20:50.52".parse::<Timestamp>(),
-            Timestamp::date_time_nanos(1985, 4, 12, 23, 20, 50, 520_000_000),
-        );
-
-        // Offset without minutes specified.
-        assert_eq!(
-            "1996-12-19T16:39:57-08".parse::<Timestamp>(),
-            Timestamp::date_time(1996, 12, 20, 0, 39, 57),
-        );
-
-        // Snowflake stage style.
-        assert_eq!(
-            "2015-09-12 00:47:19.591 Z".parse::<Timestamp>(),
-            Timestamp::date_time_nanos(2015, 9, 12, 0, 47, 19, 591_000_000),
-        );
-        assert_eq!(
-            "2020-06-15 00:01:02.123 +0800".parse::<Timestamp>(),
-            Timestamp::date_time_nanos(2020, 6, 14, 16, 1, 2, 123_000_000),
-        );
-    }
-
-    #[test]
-    fn test_parse_duration() {
-        let case = |s: &str, seconds: i64, nanos: i32| {
-            assert_eq!(
-                s.parse::<Duration>().unwrap(),
-                Duration { seconds, nanos },
-                "duration: {}",
-                s
-            );
-        };
-
-        case("0s", 0, 0);
-        case("0.0s", 0, 0);
-        case("0.000s", 0, 0);
-
-        case("-0s", 0, 0);
-        case("-0.0s", 0, 0);
-        case("-0.000s", 0, 0);
-
-        case("-0s", 0, 0);
-        case("-0.0s", 0, 0);
-        case("-0.000s", 0, 0);
-
-        case("0.05s", 0, 50_000_000);
-        case("0.050s", 0, 50_000_000);
-
-        case("-0.05s", 0, -50_000_000);
-        case("-0.050s", 0, -50_000_000);
-
-        case("1s", 1, 0);
-        case("1.0s", 1, 0);
-        case("1.000s", 1, 0);
-
-        case("-1s", -1, 0);
-        case("-1.0s", -1, 0);
-        case("-1.000s", -1, 0);
-
-        case("15s", 15, 0);
-        case("15.1s", 15, 100_000_000);
-        case("15.100s", 15, 100_000_000);
-
-        case("-15s", -15, 0);
-        case("-15.1s", -15, -100_000_000);
-        case("-15.100s", -15, -100_000_000);
-
-        case("100.000000009s", 100, 9);
-        case("-100.000000009s", -100, -9);
-    }
-
-    #[test]
-    fn test_parse_non_ascii() {
-        assert!("2021️⃣-06-15 00:01:02.123 +0800"
-            .parse::<Timestamp>()
-            .is_err());
-
-        assert!("1️⃣s".parse::<Duration>().is_err());
-    }
-
-    proptest! {
-        #[cfg(feature = "std")]
-        #[test]
-        fn check_timestamp_parse_to_string_roundtrip(
-            system_time in std::time::SystemTime::arbitrary(),
-        ) {
-
-            let ts = Timestamp::from(system_time);
-
-            assert_eq!(
-                ts,
-                ts.to_string().parse::<Timestamp>().unwrap(),
-            )
-        }
-
-        #[cfg(feature = "std")]
-        #[test]
-        fn check_duration_parse_to_string_roundtrip(
-            duration in core::time::Duration::arbitrary(),
-        ) {
-            let duration = match Duration::try_from(duration) {
-                Ok(duration) => duration,
-                Err(_) => return Err(TestCaseError::reject("duration out of range")),
-            };
-
-            prop_assert_eq!(
-                &duration,
-                &duration.to_string().parse::<Duration>().unwrap(),
-                "{}", duration.to_string()
-            );
         }
     }
 }

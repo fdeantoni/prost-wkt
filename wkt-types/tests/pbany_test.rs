@@ -1,4 +1,4 @@
-use prost::{DecodeError, EncodeError, Message};
+use prost::{DecodeError, EncodeError, Message, Name};
 use prost_wkt::*;
 use prost_wkt_types::*;
 use serde::{Deserialize, Serialize};
@@ -20,6 +20,15 @@ pub struct Foo {
     pub list: ::std::vec::Vec<std::string::String>,
     #[prost(message, optional, tag = "6")]
     pub payload: ::std::option::Option<::prost_wkt_types::Any>,
+}
+
+impl Name for Foo {
+    const PACKAGE: &'static str = "any.test";
+    const NAME: &'static str = "Foo";
+
+    fn type_url() -> String {
+        "type.googleapis.com/any.test.Foo".to_string()
+    }
 }
 
 #[typetag::serde(name = "type.googleapis.com/any.test.Foo")]
@@ -44,8 +53,7 @@ impl prost_wkt::MessageSerde for Foo {
     }
 
     fn try_encoded(&self) -> Result<Vec<u8>, EncodeError> {
-        let mut buf = Vec::new();
-        buf.reserve(Message::encoded_len(self));
+        let mut buf = Vec::with_capacity(Message::encoded_len(self));
         Message::encode(self, &mut buf)?;
         Ok(buf)
     }

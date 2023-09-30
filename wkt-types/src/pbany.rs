@@ -4,7 +4,7 @@ use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 include!(concat!(env!("OUT_DIR"), "/pbany/google.protobuf.rs"));
 
-use prost::{DecodeError, Message};
+use prost::{DecodeError, Message, EncodeError, Name};
 
 use std::borrow::Cow;
 
@@ -50,25 +50,7 @@ impl From<prost::EncodeError> for AnyError {
 }
 
 impl Any {
-    /// Packs a message into an `Any` containing a `type_url` which will take the format
-    /// of `type.googleapis.com/package_name.struct_name`, and a value containing the
-    /// encoded message.
-    #[deprecated(since = "0.3.0", note = "please use `try_pack` instead")]
-    pub fn pack<T>(message: T) -> Self
-    where
-        T: Message + MessageSerde + Default,
-    {
-        let type_url = MessageSerde::type_url(&message).to_string();
-        // Serialize the message into a value
-        let mut buf = Vec::new();
-        buf.reserve(message.encoded_len());
-        message.encode(&mut buf).expect("Failed to encode message");
-        Any {
-            type_url,
-            value: buf,
-        }
-    }
-
+    //#[deprecated(since = "0.5.0", note = "please use `from_msg` instead")]
     /// Packs a message into an `Any` containing a `type_url` which will take the format
     /// of `type.googleapis.com/package_name.struct_name`, and a value containing the
     /// encoded message.
@@ -78,8 +60,7 @@ impl Any {
     {
         let type_url = MessageSerde::type_url(&message).to_string();
         // Serialize the message into a value
-        let mut buf = Vec::new();
-        buf.reserve(message.encoded_len());
+        let mut buf = Vec::with_capacity(message.encoded_len());
         message.encode(&mut buf)?;
         let encoded = Any {
             type_url,
@@ -88,6 +69,7 @@ impl Any {
         Ok(encoded)
     }
 
+    //#[deprecated(since = "0.5.0", note = "please use `to_msg` instead")]
     /// Unpacks the contents of the `Any` into the provided message type. Example usage:
     ///
     /// ```ignore
@@ -96,11 +78,6 @@ impl Any {
     pub fn unpack_as<T: Message>(self, mut target: T) -> Result<T, AnyError> {
         let instance = target.merge(self.value.as_slice()).map(|_| target)?;
         Ok(instance)
-    }
-
-    #[deprecated(since = "0.3.0", note = "Method renamed to `try_unpack`")]
-    pub fn unpack(self) -> Result<Box<dyn prost_wkt::MessageSerde>, AnyError> {
-        self.try_unpack()
     }
 
     /// Unpacks the contents of the `Any` into the `MessageSerde` trait object. Example
@@ -125,6 +102,49 @@ impl Any {
             })
             .map_err(AnyError::new)
     }
+
+    /// From Prost's [`Any`] implementation.
+    /// Serialize the given message type `M` as [`Any`].
+    pub fn from_msg<M>(msg: &M) -> Result<Self, EncodeError>
+    where
+        M: Name,
+    {
+        let type_url = M::type_url();
+        let mut value = Vec::new();
+        Message::encode(msg, &mut value)?;
+        Ok(Any { type_url, value })
+    }
+
+    /// From Prost's [`Any`] implementation.
+    /// Decode the given message type `M` from [`Any`], validating that it has
+    /// the expected type URL.
+    #[allow(clippy::all)]
+    pub fn to_msg<M>(&self) -> Result<M, DecodeError>
+    where
+        M: Default + Name + Sized,
+    {
+        let expected_type_url = M::type_url();
+
+        match (
+            TypeUrl::new(&expected_type_url),
+            TypeUrl::new(&self.type_url),
+        ) {
+            (Some(expected), Some(actual)) => {
+                if expected == actual {
+                    return Ok(M::decode(&*self.value)?);
+                }
+            }
+            _ => (),
+        }
+
+        let mut err = DecodeError::new(format!(
+            "expected type URL: \"{}\" (got: \"{}\")",
+            expected_type_url, &self.type_url
+        ));
+        err.push("unexpected type URL", "type_url");
+        Err(err)
+    }
+
 }
 
 impl Serialize for Any {
@@ -159,6 +179,43 @@ impl<'de> Deserialize<'de> for Any {
     }
 }
 
+/// URL/resource name that uniquely identifies the type of the serialized protocol buffer message,
+/// e.g. `type.googleapis.com/google.protobuf.Duration`.
+///
+/// This string must contain at least one "/" character.
+///
+/// The last segment of the URL's path must represent the fully qualified name of the type (as in
+/// `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading "." is
+/// not accepted).
+///
+/// If no scheme is provided, `https` is assumed.
+///
+/// Schemes other than `http`, `https` (or the empty scheme) might be used with implementation
+/// specific semantics.
+#[derive(Debug, Eq, PartialEq)]
+struct TypeUrl<'a> {
+    /// Fully qualified name of the type, e.g. `google.protobuf.Duration`
+    full_name: &'a str,
+}
+
+impl<'a> TypeUrl<'a> {
+    fn new(s: &'a str) -> core::option::Option<Self> {
+        // Must contain at least one "/" character.
+        let slash_pos = s.rfind('/')?;
+
+        // The last segment of the URL's path must represent the fully qualified name
+        // of the type (as in `path/google.protobuf.Duration`)
+        let full_name = s.get((slash_pos + 1)..)?;
+
+        // The name should be in a canonical form (e.g., leading "." is not accepted).
+        if full_name.starts_with('.') {
+            return None;
+        }
+
+        Some(Self { full_name })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::pbany::*;
@@ -172,6 +229,11 @@ mod tests {
     pub struct Foo {
         #[prost(string, tag = "1")]
         pub string: std::string::String,
+    }
+
+    impl Name for Foo {
+        const NAME: &'static str = "Foo";
+        const PACKAGE: &'static str = "any.test";
     }
 
     #[typetag::serde(name = "type.googleapis.com/any.test.Foo")]
@@ -195,8 +257,7 @@ mod tests {
         }
 
         fn try_encoded(&self) -> Result<Vec<u8>, EncodeError> {
-            let mut buf = Vec::new();
-            buf.reserve(Message::encoded_len(self));
+            let mut buf = Vec::with_capacity(Message::encoded_len(self));
             Message::encode(self, &mut buf)?;
             Ok(buf)
         }
@@ -237,5 +298,21 @@ mod tests {
         let foo: &Foo = erased.downcast_ref::<Foo>().unwrap();
         println!("Deserialize default: {foo:?}");
         assert_eq!(foo, &Foo::default())
+    }
+
+    #[test]
+    fn check_prost_any_serialization() {
+        let message = crate::Timestamp::date(2000, 1, 1).unwrap();
+        let any = Any::from_msg(&message).unwrap();
+        assert_eq!(
+            &any.type_url,
+            "type.googleapis.com/google.protobuf.Timestamp"
+        );
+
+        let message2 = any.to_msg::<crate::Timestamp>().unwrap();
+        assert_eq!(message, message2);
+
+        // Wrong type URL
+        assert!(any.to_msg::<crate::Duration>().is_err());
     }
 }

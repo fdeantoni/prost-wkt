@@ -289,10 +289,13 @@ Contributions are welcome!
 
 When upgrading Prost to the latest version, make sure to also run `wkt-types/resources/update.sh` script. This will
 grab the latest source files from `prost-types` and merge them into `prost-wkt-types` at build time. After the script
-has run, be sure to validate that the selected line numbers in functions `process_prost_types_lib` and
-`process_prost_types_datetime` in the `wkt-types/build.rs` are still correct!
+has run, be sure to validate all the changes made in prost-types have been incorporated to ensure full compatibility.
 
 Please see `wkt-types/README.md` for more info.
+
+## MSRV ##
+
+The minimum supported Rust version is Rust 1.64.0.
 
 ## License ##
 

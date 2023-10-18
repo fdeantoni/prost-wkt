@@ -295,7 +295,7 @@ Please see `wkt-types/README.md` for more info.
 
 ## MSRV ##
 
-The minimum supported Rust version is Rust 1.64.0.
+The minimum supported Rust version is Rust 1.65.0.
 
 ## License ##
 

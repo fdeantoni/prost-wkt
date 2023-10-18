@@ -1,6 +1,6 @@
 [package]
 name = "prost-wkt-example"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 edition = "2021"
 

@@ -3,6 +3,7 @@ name = "prost-wkt-example"
 version = "0.5.1"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 edition = "2021"
+rust-version = "1.60"
 
 [dependencies]
 prost = "0.12.1"

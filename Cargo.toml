@@ -8,7 +8,7 @@ description = "Helper crate for prost to allow JSON serialization and deserializ
 readme = "README.md"
 documentation = "https://docs.rs/prost-wkt-derive"
 edition = "2021"
-rust-version = "1.64"
+rust-version = "1.60"
 
 [workspace]
 members = [ "wkt-build", "wkt-types", "example" ]

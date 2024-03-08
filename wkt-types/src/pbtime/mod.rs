@@ -470,6 +470,75 @@ impl From<chrono::Duration> for Duration {
     }
 }
 
+impl Serialize for Duration {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let seconds: f64 = self.seconds as f64 + self.nanos as f64 / NANOS_PER_SECOND as f64;
+        // Generated output always contains 0, 3, 6, or 9 fractional digits, depending on required precision, followed by the suffix "s". Accepted are any fractional digits (also none) as long as they fit into nano-seconds precision and the suffix "s" is required.
+        // see: https://protobuf.dev/programming-guides/proto3/#json
+        //
+        // this code currently *always* serializes with 9 fractional digits.
+        serializer.serialize_str(&format!("{:.9}s", seconds))
+    }
+}
+
+impl<'de> Deserialize<'de> for Duration {
+    fn deserialize<D>(deserializer: D) -> Result<Duration, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct DurationVisitor;
+
+        impl<'de> de::Visitor<'de> for DurationVisitor {
+            type Value = Duration;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("A duration ending in 's'")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                if !value.ends_with('s') {
+                    return Err(de::Error::custom("Duration should end with 's'"));
+                }
+
+                let duration_str = &value[..value.len() - 1]; // Remove 's' from the end
+
+                let mut parts = duration_str.split('.'); // Split seconds and fractional seconds
+
+                let seconds: i64 = parts
+                    .next()
+                    .ok_or_else(|| de::Error::custom("Missing seconds"))?
+                    .parse()
+                    .map_err(de::Error::custom)?;
+
+                let nanos: i32 = match parts.next() {
+                    Some(fraction) => {
+                        let fraction = format!("{:0<9}", fraction); // Pad fraction to nanoseconds
+                        let nanos = fraction.parse().map_err(de::Error::custom)?;
+                        if nanos < 0 || nanos >= NANOS_PER_SECOND as i32 {
+                            return Err(de::Error::custom(format!(
+                                "Fractional nanoseconds out of range: {}",
+                                nanos
+                            )));
+                        }
+                        nanos
+                    }
+                    None => 0,
+                };
+
+                Ok(Duration { seconds, nanos })
+            }
+        }
+
+        deserializer.deserialize_str(DurationVisitor)
+    }
+}
+
 impl Serialize for Timestamp {
     fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
     where
@@ -521,6 +590,31 @@ mod tests {
 
     use crate::pbtime::*;
     use chrono::{DateTime, Utc};
+
+    #[test]
+    fn serialize_duration_check_output() {
+        // protobuf JSON specification is as follows:
+        // Generated output always contains 0, 3, 6, or 9 fractional digits, depending on required precision, followed by the suffix "s". Accepted are any fractional digits (also none) as long as they fit into nano-seconds precision and the suffix "s" is required.
+        // see: https://protobuf.dev/programming-guides/proto3/#json
+
+        let duration = Duration {
+            seconds: 10,
+            nanos: 300,
+        };
+        let json = serde_json::to_string_pretty(&duration).expect("json");
+        assert_eq!(json, r#""10.000000300s""#);
+    }
+
+    #[test]
+    fn deserialize_duration_whole_seconds() {
+        let got: Duration = serde_json::from_str(r#""10s""#).expect("json");
+
+        let want = Duration {
+            seconds: 10,
+            nanos: 0,
+        };
+        assert_eq!(got, want);
+    }
 
     #[test]
     fn serialize_duration() {

@@ -10,7 +10,7 @@ documentation = "https://docs.rs/prost-wkt"
 keywords = ["protobuf", "serde", "json"]
 categories = ["encoding"]
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.70"
 
 [lib]
 doctest = false
@@ -23,17 +23,17 @@ vendored-protox = ["protox"]
 
 [dependencies]
 prost-wkt = { version = "0.5.1", path = ".." }
-prost = "0.12.1"
+prost = "0.12.3"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 chrono = { version = "0.4.27", default-features = false, features = ["serde"] }
 
 [build-dependencies]
-prost = "0.12.1"
-prost-types = "0.12.1"
-prost-build = "0.12.1"
+prost = "0.12.3"
+prost-types = "0.12.3"
+prost-build = "0.12.3"
 prost-wkt-build = { version = "0.5.1", path = "../wkt-build" }
 regex = "1"
 protobuf-src = { version = "1.1.0", optional = true }
-protox = { version = "0.5.0", optional = true }
+protox = { version = "0.6.0", optional = true }

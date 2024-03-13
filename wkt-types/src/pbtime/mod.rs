@@ -422,7 +422,7 @@ impl fmt::Display for Timestamp {
 impl From<NaiveDateTime> for Timestamp {
     fn from(dt: NaiveDateTime) -> Self {
         Timestamp {
-            seconds: dt.timestamp(),
+            seconds: dt.and_utc().timestamp(),
             nanos: dt.timestamp_subsec_nanos() as i32,
         }
     }
@@ -447,16 +447,23 @@ impl From<Timestamp> for DateTime<Utc> {
         // deprecated in favour of TryFrom but unfortunately having `TryFrom` along with
         // `From` causes a conflict.
         value.normalize();
-        let dt = NaiveDateTime::from_timestamp_opt(value.seconds, value.nanos as u32)
-            .expect("invalid or out-of-range datetime");
-        DateTime::from_naive_utc_and_offset(dt, Utc)
+        DateTime::from_timestamp(value.seconds, value.nanos as u32)
+            .expect("invalid or out-of-range datetime")
     }
 }
 
 /// Converts proto duration to chrono's Duration
 impl From<Duration> for chrono::Duration {
     fn from(val: Duration) -> Self {
-        chrono::Duration::seconds(val.seconds) + chrono::Duration::nanoseconds(val.nanos as i64)
+        let mut value = val;
+        // A call to `normalize` should capture all out-of-bound sitations hopefully
+        // ensuring a panic never happens! Ideally this implementation should be
+        // deprecated in favour of TryFrom but unfortunately having `TryFrom` along with
+        // `From` causes a conflict.        
+        value.normalize();
+        let s = chrono::TimeDelta::try_seconds(value.seconds).expect("invalid or out-of-range seconds");
+        let ns = chrono::Duration::nanoseconds(value.nanos as i64);
+        s + ns
     }
 }
 
@@ -553,12 +560,12 @@ mod tests {
         };
         let chrono_duration: chrono::Duration = duration.into();
         assert_eq!(chrono_duration.num_seconds(), 10);
-        assert_eq!((chrono_duration - chrono::Duration::seconds(10)).num_nanoseconds(), Some(100));
+        assert_eq!((chrono_duration - chrono::Duration::try_seconds(10).expect("seconds")).num_nanoseconds(), Some(100));
     }
 
     #[test]
     fn test_duration_conversion_chrono_to_pb() {
-        let chrono_duration = chrono::Duration::seconds(10) + chrono::Duration::nanoseconds(100);
+        let chrono_duration = chrono::Duration::try_seconds(10).expect("seconds") + chrono::Duration::nanoseconds(100);
         let duration: Duration = chrono_duration.into();
         assert_eq!(duration.seconds, 10);
         assert_eq!(duration.nanos, 100);

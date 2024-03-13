@@ -34,7 +34,6 @@ fn build(dir: &Path, proto: &str) {
 
     prost_build
         .compile_well_known_types()
-        .type_attribute("google.protobuf.Duration","#[derive(serde_derive::Serialize, serde_derive::Deserialize)] #[serde(default)]")
         .type_attribute("google.protobuf.Empty","#[derive(serde_derive::Serialize, serde_derive::Deserialize)]")
         .type_attribute("google.protobuf.FieldMask","#[derive(serde_derive::Serialize, serde_derive::Deserialize)]")
         .file_descriptor_set_path(&descriptor_file)

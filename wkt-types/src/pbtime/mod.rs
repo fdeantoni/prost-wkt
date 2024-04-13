@@ -423,7 +423,7 @@ impl From<NaiveDateTime> for Timestamp {
     fn from(dt: NaiveDateTime) -> Self {
         Timestamp {
             seconds: dt.and_utc().timestamp(),
-            nanos: dt.timestamp_subsec_nanos() as i32,
+            nanos: dt.and_utc().timestamp_subsec_nanos() as i32,
         }
     }
 }

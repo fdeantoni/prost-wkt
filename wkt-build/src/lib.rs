@@ -1,4 +1,4 @@
-use heck::{ToShoutySnakeCase, ToUpperCamelCase};
+use heck::ToUpperCamelCase;
 use quote::{format_ident, quote};
 use std::fs::{File, OpenOptions};
 use std::io::Write;
@@ -47,14 +47,9 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
     let type_name = message_name.to_upper_camel_case();
     let type_name = format_ident!("{}", type_name);
 
-    let dummy_const = format_ident!(
-        "IMPL_MESSAGE_SERDE_FOR_{}",
-        message_name.to_shouty_snake_case()
-    );
-
     let tokens = quote! {
         #[allow(dead_code)]
-        const #dummy_const: () = {
+        const _: () = {
             use ::prost_wkt::typetag;
             #[typetag::serde(name=#type_url)]
             impl ::prost_wkt::MessageSerde for #type_name {

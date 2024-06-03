@@ -2,6 +2,9 @@ on: [push, pull_request]
 
 name: prost-wkt build
 
+env:
+  PROTOC_VERSION: 3.20.3
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -16,28 +19,20 @@ jobs:
           - 1.70.0
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+      - name: install toolchain (${{ matrix.rust }})
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
-          profile: minimal
 
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v1
+      - name: install protoc
+        uses: taiki-e/install-action@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          tool: protoc@${{ env.PROTOC_VERSION }}
 
-      - name: Execute build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --verbose
-
-      - name: Execute tests
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --workspace --verbose
+      - name: execute build
+        run: cargo build
+        
+      - name: execute test
+        run: cargo test --workspace

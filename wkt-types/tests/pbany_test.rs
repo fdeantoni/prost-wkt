@@ -103,7 +103,7 @@ fn test_any_serialization() {
         boolean: true,
         value_data: Some(prost_wkt_types::Value::from("world".to_string())),
         list: vec!["one".to_string(), "two".to_string()],
-        payload: prost_wkt_types::Any::try_pack(inner).ok(),
+        payload: prost_wkt_types::Any::try_pack(&inner).ok(),
     };
     println!(
         "Serialized to string: {}",
@@ -158,7 +158,7 @@ fn test_any_serialize_deserialize() {
         boolean: true,
         value_data: Some(prost_wkt_types::Value::from("world".to_string())),
         list: vec!["one".to_string(), "two".to_string()],
-        payload: prost_wkt_types::Any::try_pack(inner).ok(),
+        payload: prost_wkt_types::Any::try_pack(&inner).ok(),
     };
 
     let json = serde_json::to_string(&original).unwrap();
@@ -179,7 +179,7 @@ fn test_any_unpack() {
         list: vec!["een".to_string(), "twee".to_string()],
         payload: None,
     };
-    let any = prost_wkt_types::Any::try_pack(payload).unwrap();
+    let any = prost_wkt_types::Any::try_pack(&payload).unwrap();
     let unpacked = any.try_unpack().unwrap();
     let foo = unpacked.downcast_ref::<Foo>().unwrap();
     println!("Unpacked: {foo:?}");

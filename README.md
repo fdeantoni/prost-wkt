@@ -19,13 +19,13 @@ To use it, include this crate along with prost:
 
 ```toml
 [dependencies]
-prost = "0.12"
+prost = "0.13"
 prost-wkt = "0.5"
 prost-wkt-types = "0.5"
 serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
-prost-build = "0.12"
+prost-build = "0.13"
 prost-wkt-build = "0.5"
 ```
 
@@ -294,7 +294,7 @@ stabilized.
 
 ## MSRV ##
 
-The minimum supported Rust version is Rust 1.65.0.
+The minimum supported Rust version is Rust 1.70.0.
 
 ## License ##
 

@@ -14,7 +14,7 @@ rust-version = "1.70"
 members = [ "wkt-build", "wkt-types", "example" ]
 
 [dependencies]
-prost = "0.12.3"
+prost = "0.13.1"
 inventory = "0.3.0"
 serde = "1.0"
 serde_json = "1.0"

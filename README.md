@@ -287,11 +287,10 @@ Contributions are welcome!
 
 ### Upgrading Prost ###
 
-When upgrading Prost to the latest version, make sure to also run `wkt-types/resources/update.sh` script. This will
-grab the latest source files from `prost-types` and merge them into `prost-wkt-types` at build time. After the script
-has run, be sure to validate all the changes made in prost-types have been incorporated to ensure full compatibility.
+When upgrading Prost to the latest version, make sure the latest changes from `prost-types` are incorporated into `prost-wkt-types` to ensure full compatibility.
 
-Please see `wkt-types/README.md` for more info.
+Currently the `Name` traits have specifically not been implemented until this implementation in Prost has fully
+stabilized. 
 
 ## MSRV ##
 

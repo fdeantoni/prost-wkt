@@ -10,6 +10,8 @@ use core::fmt;
 use crate::Duration;
 use crate::Timestamp;
 
+use super::TimestampError;
+
 /// A point in time, represented as a date and time in the UTC timezone.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct DateTime {
@@ -264,8 +266,10 @@ fn parse_nanos(s: &str) -> Option<(u32, &str)> {
 
     // Parse the nanoseconds, if present.
     let (nanos, s) = if let Some(s) = parse_char(s, b'.') {
-        let (digits, s) = parse_digits(s);
-        ensure!(digits.len() <= 9);
+        let (mut digits, s) = parse_digits(s);
+        if digits.len() > 9 {
+            digits = digits.split_at(9).0;
+        }
         let nanos = 10u32.pow(9 - digits.len() as u32) * digits.parse::<u32>().ok()?;
         (nanos, s)
     } else {
@@ -331,7 +335,12 @@ fn parse_offset(s: &str) -> Option<(i8, i8, &str)> {
 /// string.
 fn parse_two_digit_numeric(s: &str) -> Option<(u8, &str)> {
     debug_assert!(s.is_ascii());
-
+    if s.len() < 2 {
+        return None;
+    }
+    if s.starts_with('+') {
+        return None;
+    }
     let (digits, s) = s.split_at(2);
     Some((digits.parse().ok()?, s))
 }
@@ -424,8 +433,8 @@ pub(crate) fn year_to_seconds(year: i64) -> (i128, bool) {
     let is_leap;
     let year = year - 1900;
 
-    // Fast path for years 1900 - 2038.
-    if year as u64 <= 138 {
+    // Fast path for years 1901 - 2038.
+    if (1..=138).contains(&year) {
         let mut leaps: i64 = (year - 68) >> 2;
         if (year - 68).trailing_zeros() >= 2 {
             leaps -= 1;
@@ -501,9 +510,7 @@ pub(crate) fn parse_timestamp(s: &str) -> Option<Timestamp> {
             ..DateTime::default()
         };
 
-        ensure!(date_time.is_valid());
-
-        return Some(Timestamp::from(date_time));
+        return Timestamp::try_from(date_time).ok();
     }
 
     // Accept either 'T' or ' ' as delimiter between date and time.
@@ -533,9 +540,7 @@ pub(crate) fn parse_timestamp(s: &str) -> Option<Timestamp> {
         nanos,
     };
 
-    ensure!(date_time.is_valid());
-
-    let Timestamp { seconds, nanos } = Timestamp::from(date_time);
+    let Timestamp { seconds, nanos } = Timestamp::try_from(date_time).ok()?;
 
     let seconds =
         seconds.checked_sub(i64::from(offset_hour) * 3600 + i64::from(offset_minute) * 60)?;
@@ -571,19 +576,21 @@ pub(crate) fn parse_duration(s: &str) -> Option<Duration> {
         (seconds, nanos as i32)
     };
 
-    Some(Duration {
-        seconds,
-        nanos,
-    })
+    Some(Duration { seconds, nanos })
 }
 
-impl From<DateTime> for Timestamp {
-    fn from(date_time: DateTime) -> Timestamp {
+impl TryFrom<DateTime> for Timestamp {
+    type Error = TimestampError;
+
+    fn try_from(date_time: DateTime) -> Result<Timestamp, TimestampError> {
+        if !date_time.is_valid() {
+            return Err(TimestampError::InvalidDateTime);
+        }
         let seconds = date_time_to_seconds(&date_time);
         let nanos = date_time.nanos;
-        Timestamp {
+        Ok(Timestamp {
             seconds,
             nanos: nanos as i32,
-        }
+        })
     }
 }

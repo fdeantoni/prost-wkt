@@ -1,6 +1,6 @@
 [package]
 name = "prost-wkt-build"
-version = "0.5.2"
+version = "0.6.0"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fdeantoni/prost-wkt"

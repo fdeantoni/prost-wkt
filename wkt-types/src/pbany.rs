@@ -1,12 +1,13 @@
 use prost_wkt::MessageSerde;
-use serde::de::{Deserialize, Deserializer};
+use serde::de::{Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
 include!(concat!(env!("OUT_DIR"), "/pbany/google.protobuf.rs"));
 
-use prost::{DecodeError, Message, EncodeError, Name};
+use prost::{DecodeError, EncodeError, Message, Name};
+use serde_value::ValueDeserializer;
 
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct AnyError {
@@ -30,8 +31,8 @@ impl std::error::Error for AnyError {
     }
 }
 
-impl std::fmt::Display for AnyError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for AnyError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("failed to convert Value: ")?;
         f.write_str(&self.description)
     }
@@ -144,7 +145,6 @@ impl Any {
         err.push("unexpected type URL", "type_url");
         Err(err)
     }
-
 }
 
 impl Serialize for Any {
@@ -152,15 +152,64 @@ impl Serialize for Any {
     where
         S: Serializer,
     {
+        let mut state = serializer.serialize_struct("Any", 3)?;
+        state.serialize_field("@type", &self.type_url)?;
         match self.clone().try_unpack() {
-            Ok(result) => serde::ser::Serialize::serialize(result.as_ref(), serializer),
+            Ok(result) => {
+                state.serialize_field("value", result.as_erased_serialize())?;
+            }
             Err(_) => {
-                let mut state = serializer.serialize_struct("Any", 3)?;
-                state.serialize_field("@type", &self.type_url)?;
                 state.serialize_field("value", &self.value)?;
-                state.end()
             }
         }
+        state.end()
+    }
+}
+
+struct AnyVisitor;
+
+impl<'de> Visitor<'de> for AnyVisitor {
+    type Value = Box<dyn MessageSerde>;
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("type.googleapis.com/google.protobuf.any")
+    }
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+    where
+        A: serde::de::MapAccess<'de>,
+    {
+        let mut cached_type_url: Option<String> = None;
+        let mut cached_value: Option<serde_value::Value> = None;
+        while let Some(key) = map.next_key::<String>()? {
+            match &*key {
+                "@type" => {
+                    if cached_type_url.is_some() {
+                        return Err(serde::de::Error::duplicate_field("@type"));
+                    }
+                    cached_type_url.replace(map.next_value()?);
+                }
+                "value" => {
+                    if cached_value.is_some() {
+                        return Err(serde::de::Error::duplicate_field("value"));
+                    }
+                    cached_value.replace(map.next_value()?);
+                }
+                _ => return Err(serde::de::Error::unknown_field(&key, &["@type", "value"])),
+            };
+        }
+        let type_url = cached_type_url.ok_or_else(|| serde::de::Error::missing_field("@type"))?;
+        let raw_value = cached_value.ok_or_else(|| serde::de::Error::missing_field("value"))?;
+        let entry = ::prost_wkt::inventory::iter::<::prost_wkt::MessageSerdeDecoderEntry>
+            .into_iter()
+            .find(|entry| type_url == entry.type_url)
+            .ok_or_else(|| {
+                serde::de::Error::invalid_type(
+                    serde::de::Unexpected::Str(&type_url),
+                    &"a typeurl registered by deriving SerdeMessage" as &dyn serde::de::Expected,
+                )
+            })?;
+        let mut deserializer =
+            <dyn erased_serde::Deserializer>::erase(ValueDeserializer::<A::Error>::new(raw_value));
+        (entry.deserializer)(&mut deserializer).map_err(|err| serde::de::Error::custom(err))
     }
 }
 
@@ -169,8 +218,7 @@ impl<'de> Deserialize<'de> for Any {
     where
         D: Deserializer<'de>,
     {
-        let erased: Box<dyn prost_wkt::MessageSerde> =
-            serde::de::Deserialize::deserialize(deserializer)?;
+        let erased = deserializer.deserialize_struct("Any", &["@type", "value"], AnyVisitor)?;
         let type_url = erased.type_url().to_string();
         let value = erased.try_encoded().map_err(|err| {
             serde::de::Error::custom(format!("Failed to encode message: {err:?}"))
@@ -219,12 +267,12 @@ impl<'a> TypeUrl<'a> {
 #[cfg(test)]
 mod tests {
     use crate::pbany::*;
-    use prost::{DecodeError, EncodeError, Message};
-    use prost_wkt::*;
-    use serde::*;
+    use serde_derive::*;
     use serde_json::json;
 
-    #[derive(Clone, Eq, PartialEq, ::prost::Message, Serialize, Deserialize)]
+    #[derive(
+        Clone, Eq, PartialEq, ::prost::Message, Serialize, Deserialize, ::prost_wkt::MessageSerde,
+    )]
     #[serde(default, rename_all = "camelCase")]
     pub struct Foo {
         #[prost(string, tag = "1")]
@@ -234,33 +282,6 @@ mod tests {
     impl Name for Foo {
         const NAME: &'static str = "Foo";
         const PACKAGE: &'static str = "any.test";
-    }
-
-    #[typetag::serde(name = "type.googleapis.com/any.test.Foo")]
-    impl prost_wkt::MessageSerde for Foo {
-        fn message_name(&self) -> &'static str {
-            "Foo"
-        }
-
-        fn package_name(&self) -> &'static str {
-            "any.test"
-        }
-
-        fn type_url(&self) -> &'static str {
-            "type.googleapis.com/any.test.Foo"
-        }
-        fn new_instance(&self, data: Vec<u8>) -> Result<Box<dyn MessageSerde>, DecodeError> {
-            let mut target = Self::default();
-            Message::merge(&mut target, data.as_slice())?;
-            let erased: Box<dyn MessageSerde> = Box::new(target);
-            Ok(erased)
-        }
-
-        fn try_encoded(&self) -> Result<Vec<u8>, EncodeError> {
-            let mut buf = Vec::with_capacity(Message::encoded_len(self));
-            Message::encode(self, &mut buf)?;
-            Ok(buf)
-        }
     }
 
     #[test]
@@ -294,10 +315,10 @@ mod tests {
             "@type": type_url,
             "value": {}
         });
-        let erased: Box<dyn MessageSerde> = serde_json::from_value(data).unwrap();
-        let foo: &Foo = erased.downcast_ref::<Foo>().unwrap();
+        let any: Any = serde_json::from_value(data).unwrap();
+        let foo: Foo = any.to_msg().unwrap();
         println!("Deserialize default: {foo:?}");
-        assert_eq!(foo, &Foo::default())
+        assert_eq!(foo, Foo::default())
     }
 
     #[test]

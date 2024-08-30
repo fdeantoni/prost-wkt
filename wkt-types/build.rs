@@ -2,9 +2,6 @@ use std::env;
 use std::fs::create_dir_all;
 use std::path::{Path, PathBuf};
 
-use prost::Message;
-use prost_types::FileDescriptorSet;
-
 fn main() {
     #[cfg(feature = "vendored-protoc")]
     std::env::set_var("PROTOC", protobuf_src::protoc());
@@ -34,20 +31,18 @@ fn build(dir: &Path, proto: &str) {
 
     prost_build
         .compile_well_known_types()
-        .type_attribute("google.protobuf.Empty","#[derive(serde_derive::Serialize, serde_derive::Deserialize)]")
-        .type_attribute("google.protobuf.FieldMask","#[derive(serde_derive::Serialize, serde_derive::Deserialize)]")
+        .enable_type_names()
+        .type_attribute(
+            "google.protobuf.Empty",
+            "#[derive(serde_derive::Serialize, serde_derive::Deserialize)]",
+        )
+        .type_attribute(
+            "google.protobuf.FieldMask",
+            "#[derive(serde_derive::Serialize, serde_derive::Deserialize)]",
+        )
+        .message_attribute(".", "#[derive(::prost_wkt::MessageSerde)]")
         .file_descriptor_set_path(&descriptor_file)
         .out_dir(&out)
-        .compile_protos(
-            &[
-                source
-            ],
-            &["proto/".to_string()],
-        )
+        .compile_protos(&[source], &["proto/".to_string()])
         .unwrap();
-
-    let descriptor_bytes = std::fs::read(descriptor_file).unwrap();
-    let descriptor = FileDescriptorSet::decode(&descriptor_bytes[..]).unwrap();
-
-    prost_wkt_build::add_serde(out, descriptor);
 }

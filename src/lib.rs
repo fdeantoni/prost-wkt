@@ -1,10 +1,11 @@
 pub use inventory;
 
-pub use typetag;
+pub use const_format;
+pub use erased_serde;
+pub use prost_wkt_derive::MessageSerde;
 
 /// Trait to support serialization and deserialization of `prost` messages.
-#[typetag::serde(tag = "@type")]
-pub trait MessageSerde: prost::Message + std::any::Any {
+pub trait MessageSerde: prost::Message + std::any::Any + erased_serde::Serialize {
     /// message name as in proto file
     fn message_name(&self) -> &'static str;
     /// package name as in proto file
@@ -15,6 +16,8 @@ pub trait MessageSerde: prost::Message + std::any::Any {
     fn new_instance(&self, data: Vec<u8>) -> Result<Box<dyn MessageSerde>, prost::DecodeError>;
     /// Returns the encoded protobuf message as bytes
     fn try_encoded(&self) -> Result<Vec<u8>, prost::EncodeError>;
+    /// Returns an erased serialize dynamic reference
+    fn as_erased_serialize(&self) -> &dyn erased_serde::Serialize;
 }
 
 /// The implementation here is a direct copy of the `impl dyn` of [`std::any::Any`]!
@@ -86,10 +89,13 @@ impl dyn MessageSerde {
 }
 
 type MessageSerdeDecoderFn = fn(&[u8]) -> Result<Box<dyn MessageSerde>, ::prost::DecodeError>;
+type MessageSerdeDeserializerFn =
+    fn(&mut dyn erased_serde::Deserializer) -> Result<Box<dyn MessageSerde>, erased_serde::Error>;
 
 pub struct MessageSerdeDecoderEntry {
     pub type_url: &'static str,
     pub decoder: MessageSerdeDecoderFn,
+    pub deserializer: MessageSerdeDeserializerFn,
 }
 
 inventory::collect!(MessageSerdeDecoderEntry);

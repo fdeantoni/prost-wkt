@@ -6,6 +6,7 @@ fn main() {
     let mut prost_build = prost_build::Config::new();
     prost_build
         .enable_type_names()
+        .type_name_domain(&[".my.requests", ".my.messages"], "type.googleapis.com")
         .type_attribute(
             ".my.requests",
             "#[derive(serde::Serialize, serde::Deserialize, ::prost_wkt::MessageSerde)] #[serde(default, rename_all=\"camelCase\")]",

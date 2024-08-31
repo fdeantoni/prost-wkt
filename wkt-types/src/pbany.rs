@@ -267,13 +267,6 @@ impl<'a> TypeUrl<'a> {
             return None;
         }
 
-        // Make the base url explicit
-        let base_url = if base_url == "" {
-            "type.googleapis.com"
-        } else {
-            base_url
-        };
-
         Some(Self {
             base_url,
             full_name,
@@ -327,6 +320,9 @@ mod tests {
     impl Name for Foo {
         const NAME: &'static str = "Foo";
         const PACKAGE: &'static str = "any.test";
+        fn type_url() -> String {
+            format!("type.googleapis.com/{}.{}", Self::PACKAGE, Self::NAME)
+        }
     }
 
     #[test]

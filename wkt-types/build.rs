@@ -32,6 +32,7 @@ fn build(dir: &Path, proto: &str) {
     prost_build
         .compile_well_known_types()
         .enable_type_names()
+        .type_name_domain(&["."], "type.googleapis.com")
         .type_attribute(
             "google.protobuf.Empty",
             "#[derive(serde_derive::Serialize, serde_derive::Deserialize)]",

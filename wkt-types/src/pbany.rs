@@ -59,10 +59,7 @@ impl Any {
     where
         T: Message + MessageSerde + Default,
     {
-        let original_type_url = message.type_url();
-        let type_url = TypeUrl::new(&message.type_url())
-            .map(|s| s.to_string())
-            .unwrap_or(original_type_url);
+        let type_url = message.type_url();
         // Serialize the message into a value
         let mut buf = Vec::with_capacity(message.encoded_len());
         message.encode(&mut buf)?;
@@ -110,9 +107,7 @@ impl Any {
     where
         M: Name,
     {
-        let type_url = TypeUrl::new(&M::type_url())
-            .map(|s| s.to_string())
-            .unwrap_or_else(M::type_url);
+        let type_url = M::type_url();
         let mut value = Vec::new();
         Message::encode(msg, &mut value)?;
         Ok(Any { type_url, value })
@@ -155,11 +150,7 @@ impl Serialize for Any {
         S: Serializer,
     {
         let mut state = serializer.serialize_struct("Any", 3)?;
-        if let Some(type_url) = TypeUrl::new(&self.type_url) {
-            state.serialize_field("@type", &type_url)?;
-        } else {
-            state.serialize_field("@type", &self.type_url)?;
-        }
+        state.serialize_field("@type", &self.type_url)?;
         match self.clone().try_unpack() {
             Ok(result) => {
                 state.serialize_field("value", result.as_erased_serialize())?;
@@ -289,17 +280,10 @@ impl<'a> Serialize for TypeUrl<'a> {
     }
 }
 
-fn find_entry(type_url: &str) -> Option<&'static MessageSerdeDecoderEntry> {
-    let to_search = TypeUrl::new(type_url)?;
+fn find_entry(to_search: &str) -> Option<&'static MessageSerdeDecoderEntry> {
     prost_wkt::inventory::iter::<MessageSerdeDecoderEntry>
         .into_iter()
-        .find(|entry| {
-            let raw_entry_type_url = (entry.type_url)();
-            let Some(entry_type_url) = TypeUrl::new(&raw_entry_type_url) else {
-                return false;
-            };
-            entry_type_url == to_search
-        })
+        .find(|entry| (entry.type_url)() == to_search)
 }
 
 #[cfg(test)]

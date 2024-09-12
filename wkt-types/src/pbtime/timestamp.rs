@@ -320,4 +320,3 @@ impl<'de> Deserialize<'de> for Timestamp {
         deserializer.deserialize_str(TimestampVisitor)
     }
 }
-

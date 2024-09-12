@@ -201,7 +201,7 @@ impl Serialize for Struct {
     {
         let mut map = serializer.serialize_map(Some(self.fields.len()))?;
         for (k, v) in &self.fields {
-            map.serialize_entry( k, v)?;
+            map.serialize_entry(k, v)?;
         }
         map.end()
     }
@@ -217,12 +217,8 @@ impl Serialize for Value {
             Some(value::Kind::StringValue(string)) => serializer.serialize_str(string),
             Some(value::Kind::BoolValue(boolean)) => serializer.serialize_bool(*boolean),
             Some(value::Kind::NullValue(_)) => serializer.serialize_none(),
-            Some(value::Kind::ListValue(list)) => {
-                list.serialize(serializer)
-            }
-            Some(value::Kind::StructValue(object)) => {
-                object.serialize(serializer)
-            }
+            Some(value::Kind::ListValue(list)) => list.serialize(serializer),
+            Some(value::Kind::StructValue(object)) => object.serialize(serializer),
             _ => serializer.serialize_none(),
         }
     }
@@ -244,9 +240,7 @@ impl<'de> Visitor<'de> for ListValueVisitor {
         while let Some(el) = seq.next_element()? {
             values.push(el)
         }
-        Ok(ListValue {
-            values
-        })
+        Ok(ListValue { values })
     }
 }
 
@@ -271,21 +265,19 @@ impl<'de> Visitor<'de> for StructVisitor {
     where
         A: MapAccess<'de>,
     {
-        let mut fields: std::collections::HashMap<String, Value> =
-            std::collections::HashMap::new();
+        let mut fields: std::collections::HashMap<String, Value> = std::collections::HashMap::new();
         while let Some((key, value)) = map.next_entry::<String, Value>()? {
             fields.insert(key, value);
         }
-        Ok(Struct {
-            fields
-        })
+        Ok(Struct { fields })
     }
 }
 
 impl<'de> Deserialize<'de> for Struct {
     fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
-        where
-            D: Deserializer<'de> {
+    where
+        D: Deserializer<'de>,
+    {
         deserializer.deserialize_map(StructVisitor)
     }
 }

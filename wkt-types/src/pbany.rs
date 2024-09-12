@@ -91,7 +91,7 @@ impl Any {
     /// let back: Box<dyn MessageSerde> = any.try_unpack()?;
     /// ```
     pub fn try_unpack(self) -> Result<Box<dyn prost_wkt::MessageSerde>, AnyError> {
-        find_entry(&self.type_url).ok_or_else(|| format!("Failed to deserialize {}. Make sure prost-wkt-build is executed.", self.type_url))
+        find_entry(&self.type_url).ok_or_else(|| format!("Failed to deserialize {}. Make sure the MessageSerde trait is derived through its proc macro.", self.type_url))
             .and_then(|entry| {
                 (entry.decoder)(&self.value).map_err(|error| {
                     format!(

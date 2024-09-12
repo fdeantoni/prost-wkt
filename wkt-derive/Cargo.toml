@@ -1,0 +1,18 @@
+[package]
+name = "prost-wkt-derive"
+version = "0.6.0"
+authors = ["fdeantoni <fdeantoni@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/fdeantoni/prost-wkt"
+description = "Derive traits to assist with JSON serialization and deserialization of Well Known Types."
+readme = "../README.md"
+documentation = "https://docs.rs/prost-wkt-derive"
+edition = "2021"
+rust-version = "1.70"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1.0.37"
+syn = "2.0.76"

@@ -11,13 +11,15 @@ edition = "2021"
 rust-version = "1.70"
 
 [workspace]
-members = [ "wkt-build", "wkt-types", "example" ]
+members = ["wkt-types", "wkt-derive", "example"]
 
 [dependencies]
 prost = "0.13.1"
+prost-wkt-derive = { path = "wkt-derive" }
+erased-serde = "0.4"
 inventory = "0.3.0"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 chrono = { version = "0.4.27", default-features = false, features = ["serde"] }
-typetag = "0.2"
+const_format = "0.2.32"

@@ -1,10 +1,10 @@
-use prost::{DecodeError, EncodeError, Message, Name};
+use prost::Name;
 use prost_wkt::*;
 use prost_wkt_types::*;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, ::prost::Message, Serialize, Deserialize, MessageSerde)]
 #[prost(package = "any.test")]
 #[serde(rename_all = "camelCase")]
 pub struct Foo {
@@ -28,44 +28,6 @@ impl Name for Foo {
 
     fn type_url() -> String {
         "type.googleapis.com/any.test.Foo".to_string()
-    }
-}
-
-#[typetag::serde(name = "type.googleapis.com/any.test.Foo")]
-impl prost_wkt::MessageSerde for Foo {
-    fn message_name(&self) -> &'static str {
-        "Foo"
-    }
-
-    fn package_name(&self) -> &'static str {
-        "any.test"
-    }
-
-    fn type_url(&self) -> &'static str {
-        "type.googleapis.com/any.test.Foo"
-    }
-
-    fn new_instance(&self, data: Vec<u8>) -> Result<Box<dyn MessageSerde>, DecodeError> {
-        let mut target = Self::default();
-        Message::merge(&mut target, data.as_slice())?;
-        let erased: Box<dyn MessageSerde> = Box::new(target);
-        Ok(erased)
-    }
-
-    fn try_encoded(&self) -> Result<Vec<u8>, EncodeError> {
-        let mut buf = Vec::with_capacity(Message::encoded_len(self));
-        Message::encode(self, &mut buf)?;
-        Ok(buf)
-    }
-}
-
-::prost_wkt::inventory::submit! {
-    ::prost_wkt::MessageSerdeDecoderEntry {
-        type_url: "type.googleapis.com/any.test.Foo",
-        decoder: |buf: &[u8]| {
-            let msg: Foo = ::prost::Message::decode(buf)?;
-            Ok(Box::new(msg))
-        }
     }
 }
 
@@ -109,8 +71,8 @@ fn test_any_serialization() {
         "Serialized to string: {}",
         serde_json::to_string_pretty(&msg).unwrap()
     );
-    let erased = &msg as &dyn MessageSerde;
-    let json = serde_json::to_string(erased).unwrap();
+    let any = Any::from_msg(&msg).unwrap();
+    let json = serde_json::to_string(&any).unwrap();
     println!("Erased json: {json}");
 }
 

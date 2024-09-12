@@ -8,8 +8,8 @@ pub use timestamp::TimestampError;
 
 use core::convert::TryFrom;
 use core::str::FromStr;
-use core::*;
 use core::time;
+use core::*;
 use std::convert::TryInto;
 
 use chrono::prelude::*;
@@ -25,7 +25,6 @@ include!(concat!(env!("OUT_DIR"), "/pbtime/google.protobuf.rs"));
 ////////////////////////////////////////////////////////////////////////////////
 const NANOS_PER_SECOND: i32 = 1_000_000_000;
 const NANOS_MAX: i32 = NANOS_PER_SECOND - 1;
-
 
 #[cfg(test)]
 mod tests {
@@ -89,12 +88,17 @@ mod tests {
         };
         let chrono_duration: chrono::Duration = duration.into();
         assert_eq!(chrono_duration.num_seconds(), 10);
-        assert_eq!((chrono_duration - chrono::Duration::try_seconds(10).expect("seconds")).num_nanoseconds(), Some(100));
+        assert_eq!(
+            (chrono_duration - chrono::Duration::try_seconds(10).expect("seconds"))
+                .num_nanoseconds(),
+            Some(100)
+        );
     }
 
     #[test]
     fn test_duration_conversion_chrono_to_pb() {
-        let chrono_duration = chrono::Duration::try_seconds(10).expect("seconds") + chrono::Duration::nanoseconds(100);
+        let chrono_duration = chrono::Duration::try_seconds(10).expect("seconds")
+            + chrono::Duration::nanoseconds(100);
         let duration: Duration = chrono_duration.into();
         assert_eq!(duration.seconds, 10);
         assert_eq!(duration.nanos, 100);

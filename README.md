@@ -26,7 +26,6 @@ serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
 prost-build = "0.13"
-prost-wkt-build = "0.6"
 ```
 
 In your `build.rs`, make sure to add the following options:
@@ -290,7 +289,7 @@ Contributions are welcome!
 When upgrading Prost to the latest version, make sure the latest changes from `prost-types` are incorporated into `prost-wkt-types` to ensure full compatibility.
 
 Currently the `Name` traits have specifically not been implemented until this implementation in Prost has fully
-stabilized. 
+stabilized.
 
 ## MSRV ##
 

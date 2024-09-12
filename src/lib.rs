@@ -104,9 +104,18 @@ impl MessageSerdeDecoderEntry {
                 let msg: M = prost::Message::decode(buf)?;
                 Ok(Box::new(msg))
             },
-            deserializer: |de| erased_serde::deserialize::<M>(de).map(|v| Box::new(v) as _),
+            deserializer: deserialize_boxed::<M>,
         }
     }
+}
+
+fn deserialize_boxed<M>(
+    de: &mut dyn erased_serde::Deserializer,
+) -> Result<Box<dyn MessageSerde>, erased_serde::Error>
+where
+    for<'a> M: MessageSerde + serde::Deserialize<'a>,
+{
+    erased_serde::deserialize::<M>(de).map(|v| Box::new(v) as _)
 }
 
 inventory::collect!(MessageSerdeDecoderEntry);

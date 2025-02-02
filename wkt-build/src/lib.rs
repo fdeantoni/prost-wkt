@@ -9,7 +9,17 @@ pub use prost_types::FileDescriptorSet;
 
 use prost_build::Module;
 
+pub struct SerdeOptions {
+    type_url_generator: Box<dyn Fn(&str, &str) -> String + 'static>,
+}
+
+
 pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
+    add_serde_with_options(out, descriptor, SerdeOptions::default())
+}
+
+
+pub fn add_serde_with_options(out: PathBuf, descriptor: FileDescriptorSet, options: SerdeOptions) {
     for fd in &descriptor.file {
         let package_name = match fd.package {
             Some(ref pkg) => pkg,
@@ -33,7 +43,7 @@ pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
                 None => continue,
             };
 
-            let type_url = format!("type.googleapis.com/{package_name}.{message_name}");
+            let type_url = (options.type_url_generator)(package_name, message_name);
 
             gen_trait_impl(&mut rust_file, package_name, message_name, &type_url);
         }
@@ -98,4 +108,33 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
 
     writeln!(rust_file).unwrap();
     writeln!(rust_file, "{}", &tokens).unwrap();
+}
+
+
+impl Default for SerdeOptions {
+    fn default() -> Self {
+        Self {
+            type_url_generator: Box::new(|package, message| format!("type.googleapis.com/{}.{}", package, message)),
+        }
+    }
+}
+
+impl SerdeOptions {
+    /// Set a custom type url generator.
+    /// 
+    /// The generator is a function that takes a package name and a message name and returns a type url.
+    /// I.e by default the type url is will be `type.googleapis.com/{package}.{message}` but you can change it to anything you want according to your needs.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// let options = SerdeOptions::default().with_custom_type_url_generator(|package, message| format!("my.custom.type.url/{}.{}", package, message));
+    /// ```
+    /// 
+    /// 
+    pub fn with_custom_type_url_generator<F: Fn(&str, &str) -> String + 'static>(mut self, generator: F) -> Self {
+        self.type_url_generator = Box::new(generator);
+        self
+    }
+
 }

@@ -1,9 +1,9 @@
 [package]
 name = "prost-wkt-example"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.71.1"
 
 [dependencies]
 prost = "0.13.1"

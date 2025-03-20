@@ -1,6 +1,6 @@
 [package]
 name = "prost-wkt-types"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fdeantoni/prost-wkt"
@@ -10,7 +10,7 @@ documentation = "https://docs.rs/prost-wkt"
 keywords = ["protobuf", "serde", "json"]
 categories = ["encoding"]
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.71.1"
 
 [lib]
 doctest = false

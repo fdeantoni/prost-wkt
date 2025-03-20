@@ -128,6 +128,7 @@ impl SerdeOptions {
     /// # Example
     /// 
     /// ```rust
+    /// # use prost_wkt_build::SerdeOptions;
     /// let options = SerdeOptions::default().with_custom_type_url_generator(|package, message| format!("my.custom.type.url/{}.{}", package, message));
     /// ```
     /// 

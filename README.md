@@ -290,7 +290,7 @@ Currently the `Name` traits have specifically not been implemented until this im
 
 ## MSRV ##
 
-The minimum supported Rust version is Rust 1.70.0.
+The minimum supported Rust version is Rust 1.75.0.
 
 ## License ##
 

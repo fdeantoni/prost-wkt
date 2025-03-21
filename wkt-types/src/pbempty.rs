@@ -24,7 +24,8 @@ mod tests {
 
     #[test]
     fn deserialize_empty() {
-        let msg: Empty = serde_json::from_str("{}").expect("Could not deserialize `{}` to an Empty struct!");
+        let msg: Empty =
+            serde_json::from_str("{}").expect("Could not deserialize `{}` to an Empty struct!");
         assert_eq!(msg, EMPTY);
     }
 

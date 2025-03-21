@@ -1,20 +1,17 @@
 pub use inventory;
 
-pub use typetag;
+pub use const_format;
+pub use erased_serde;
+pub use prost_wkt_derive::MessageSerde;
 
 /// Trait to support serialization and deserialization of `prost` messages.
-#[typetag::serde(tag = "@type")]
-pub trait MessageSerde: prost::Message + std::any::Any {
-    /// message name as in proto file
-    fn message_name(&self) -> &'static str;
-    /// package name as in proto file
-    fn package_name(&self) -> &'static str;
+pub trait MessageSerde: prost::Message + std::any::Any + erased_serde::Serialize {
     /// the message proto type url e.g. type.googleapis.com/my.package.MyMessage
-    fn type_url(&self) -> &'static str;
-    /// Creates a new instance of this message using the protobuf encoded data
-    fn new_instance(&self, data: Vec<u8>) -> Result<Box<dyn MessageSerde>, prost::DecodeError>;
+    fn type_url(&self) -> String;
     /// Returns the encoded protobuf message as bytes
     fn try_encoded(&self) -> Result<Vec<u8>, prost::EncodeError>;
+    /// Returns an erased serialize dynamic reference
+    fn as_erased_serialize(&self) -> &dyn erased_serde::Serialize;
 }
 
 /// The implementation here is a direct copy of the `impl dyn` of [`std::any::Any`]!
@@ -85,11 +82,40 @@ impl dyn MessageSerde {
     }
 }
 
+type MessageSerdeTypeUrlFn = fn() -> String;
 type MessageSerdeDecoderFn = fn(&[u8]) -> Result<Box<dyn MessageSerde>, ::prost::DecodeError>;
+type MessageSerdeDeserializerFn =
+    fn(&mut dyn erased_serde::Deserializer) -> Result<Box<dyn MessageSerde>, erased_serde::Error>;
 
 pub struct MessageSerdeDecoderEntry {
-    pub type_url: &'static str,
+    pub type_url: MessageSerdeTypeUrlFn,
     pub decoder: MessageSerdeDecoderFn,
+    pub deserializer: MessageSerdeDeserializerFn,
+}
+
+impl MessageSerdeDecoderEntry {
+    pub const fn new<M>() -> Self
+    where
+        for<'a> M: MessageSerde + prost::Name + Default + serde::Deserialize<'a>,
+    {
+        Self {
+            type_url: <M as prost::Name>::type_url,
+            decoder: |buf| {
+                let msg: M = prost::Message::decode(buf)?;
+                Ok(Box::new(msg))
+            },
+            deserializer: deserialize_boxed::<M>,
+        }
+    }
+}
+
+fn deserialize_boxed<M>(
+    de: &mut dyn erased_serde::Deserializer,
+) -> Result<Box<dyn MessageSerde>, erased_serde::Error>
+where
+    for<'a> M: MessageSerde + serde::Deserialize<'a>,
+{
+    erased_serde::deserialize::<M>(de).map(|v| Box::new(v) as _)
 }
 
 inventory::collect!(MessageSerdeDecoderEntry);

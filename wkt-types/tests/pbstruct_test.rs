@@ -30,7 +30,7 @@ fn test_flatten_struct() {
     let mut fields: HashMap<String, Value> = HashMap::new();
     fields.insert("test".to_string(), create_struct());
     let strct = Struct {
-        fields: fields.clone()
+        fields: fields.clone(),
     };
     let string_strct = serde_json::to_string_pretty(&strct).expect("Serialized struct");
     println!("{string_strct}");
@@ -46,7 +46,7 @@ fn test_flatten_struct() {
 fn test_flatten_list() {
     let values: Vec<Value> = vec![Value::null(), Value::from(20.0), Value::from(true)];
     let list: ListValue = ListValue {
-        values: values.clone()
+        values: values.clone(),
     };
     let string_list = serde_json::to_string_pretty(&list).expect("Serialized list");
     println!("{string_list}");
@@ -56,5 +56,4 @@ fn test_flatten_list() {
     println!("{string}");
 
     assert_eq!(string_list, string);
-
 }

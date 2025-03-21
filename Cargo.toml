@@ -1,6 +1,6 @@
 [package]
 name = "prost-wkt"
-version = "0.6.1"
+version = "0.7.0"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fdeantoni/prost-wkt"
@@ -14,7 +14,7 @@ rust-version = "1.71.1"
 members = ["wkt-types", "wkt-derive", "example"]
 
 [dependencies]
-prost = "0.13.1"
+prost = "0.13.5"
 prost-wkt-derive = { path = "wkt-derive" }
 erased-serde = "0.4"
 inventory = "0.3.0"

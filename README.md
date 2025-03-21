@@ -1,27 +1,25 @@
 # *PROST Well Known Types JSON Serialization and Deserialization* #
+
 [![crates.io](https://img.shields.io/crates/v/prost-wkt-types)](https://crates.io/crates/prost-wkt-types) [![build](https://github.com/fdeantoni/prost-wkt/actions/workflows/rust.yml/badge.svg)](https://github.com/fdeantoni/prost-wkt/actions/workflows/rust.yml)
 
-[Prost](https://github.com/tokio-rs/prost) is a [Protocol Buffers](https://developers.google.com/protocol-buffers/)
-implementation for the [Rust Language](https://www.rust-lang.org/) that generates simple, idiomatic Rust code from
-`proto2` and `proto3` files.
+[Prost](https://github.com/tokio-rs/prost) is a [Protocol Buffers](https://developers.google.com/protocol-buffers/) implementation for the [Rust Language](https://www.rust-lang.org/) that generates simple, idiomatic Rust code from `proto2` and `proto3` files.
 
-It includes `prost-types` which gives basic support for protobuf Well-Known-Types (WKT), but support is basic. For
-example, it does not include packing or unpacking of messages in the `Any` type, nor much support in the way of JSON
-serialization and deserialization of that type.
+It includes `prost-types` which gives basic support for protobuf Well-Known-Types (WKT), but support is basic. For example, it does not include packing or unpacking of messages in the `Any` type, nor much support in the way of JSON serialization and deserialization of that type.
 
 This crate can help you if you need:
- - helper methods for packing and unpacking messages to/from an [Any](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Any),
- - helper methods for converting [chrono](https://github.com/chronotope/chrono) types to [Timestamp](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Timestamp) and back again,
- - helper methods for converting common rust types to [Value](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Value) and back again,
- - serde support for the types above.
+
+- helper methods for packing and unpacking messages to/from an [Any](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Any),
+- helper methods for converting [chrono](https://github.com/chronotope/chrono) types to [Timestamp](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Timestamp) and back again,
+- helper methods for converting common rust types to [Value](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Value) and back again,
+- serde support for the types above.
 
 To use it, include this crate along with prost:
 
 ```toml
 [dependencies]
 prost = "0.13"
-prost-wkt = "0.6"
-prost-wkt-types = "0.6"
+prost-wkt = "0.7"
+prost-wkt-types = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
@@ -29,6 +27,7 @@ prost-build = "0.13"
 ```
 
 In your `build.rs`, make sure to add the following options:
+
 ```rust
 use std::{env, path::PathBuf};
 use prost_wkt_build::*;
@@ -75,9 +74,7 @@ fn main() {
 }
 ```
 
-The above configuration will include `Serialize`, and `Deserialize` on each generated struct. This will allow you to
-use `serde` fully. Moreover, it ensures that the `Any` type is deserialized properly as JSON. For example, assume we
-have the following messages defined in our proto file:
+The above configuration will include `Serialize`, and `Deserialize` on each generated struct. This will allow you to use `serde` fully. Moreover, it ensures that the `Any` type is deserialized properly as JSON. For example, assume we have the following messages defined in our proto file:
 
 ```proto
 syntax = "proto3";
@@ -98,8 +95,7 @@ message Foo {
 }
 ```
 
-After generating the rust structs for the above using `prost-build` with the above configuration, you will then be able
-to do the following:
+After generating the rust structs for the above using `prost-build` with the above configuration, you will then be able to do the following:
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -140,7 +136,7 @@ fn main() -> Result<(), AnyError> {
 
 The above will generate the following stdout:
 
-```
+```console
 JSON:
 {
   "requestId": "test1",
@@ -175,6 +171,7 @@ message SomeOne {
 ```
 
 is converted to rust as follows:
+
 ```rust
 #[derive(Serialize, Deserialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -199,12 +196,13 @@ pub mod some_one {
 ```
 
 However, rust requires the importation of macros in each module, so each should have the following added:
+
 ```rust
 use serde::{Serialize, Deserialize};
 ```
 
-In the generated code snippet, the above statement is missing in the `some_one` module, and the rust compiler will
-complain about it. To fix it, we would have to add the appropriate use statement in the `some_one` module like so:
+In the generated code snippet, the above statement is missing in the `some_one` module, and the rust compiler will complain about it. To fix it, we would have to add the appropriate use statement in the `some_one` module like so:
+
 ```rust
 #[derive(Serialize, Deserialize)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -229,8 +227,8 @@ pub mod some_one {
 }
 ```
 
-Luckily, you can achieve the above by tweaking the `build.rs`. The configuration below, for example, will add the
-required serde import to the `some_one` module as needed:
+Luckily, you can achieve the above by tweaking the `build.rs`. The configuration below, for example, will add the required serde import to the `some_one` module as needed:
+
 ```rust
 fn main() {
     let out = PathBuf::from(env::var("OUT_DIR").unwrap());
@@ -288,8 +286,7 @@ Contributions are welcome!
 
 When upgrading Prost to the latest version, make sure the latest changes from `prost-types` are incorporated into `prost-wkt-types` to ensure full compatibility.
 
-Currently the `Name` traits have specifically not been implemented until this implementation in Prost has fully
-stabilized.
+Currently the `Name` traits have specifically not been implemented until this implementation in Prost has fully stabilized.
 
 ## MSRV ##
 

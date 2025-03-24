@@ -51,36 +51,6 @@ impl From<prost::EncodeError> for AnyError {
 }
 
 impl Any {
-    //#[deprecated(since = "0.5.0", note = "please use `from_msg` instead")]
-    /// Packs a message into an `Any` containing a `type_url` which will take the format
-    /// of `type.googleapis.com/package_name.struct_name`, and a value containing the
-    /// encoded message.
-    pub fn try_pack<T>(message: T) -> Result<Self, AnyError>
-    where
-        T: Message + MessageSerde + Default,
-    {
-        let type_url = message.type_url();
-        // Serialize the message into a value
-        let mut buf = Vec::with_capacity(message.encoded_len());
-        message.encode(&mut buf)?;
-        let encoded = Any {
-            type_url,
-            value: buf,
-        };
-        Ok(encoded)
-    }
-
-    //#[deprecated(since = "0.5.0", note = "please use `to_msg` instead")]
-    /// Unpacks the contents of the `Any` into the provided message type. Example usage:
-    ///
-    /// ```ignore
-    /// let back: Foo = any.unpack_as(Foo::default())?;
-    /// ```
-    pub fn unpack_as<T: Message>(self, mut target: T) -> Result<T, AnyError> {
-        let instance = target.merge(self.value.as_slice()).map(|_| target)?;
-        Ok(instance)
-    }
-
     /// Unpacks the contents of the `Any` into the `MessageSerde` trait object. Example
     /// usage:
     ///
@@ -116,7 +86,6 @@ impl Any {
     /// From Prost's [`Any`] implementation.
     /// Decode the given message type `M` from [`Any`], validating that it has
     /// the expected type URL.
-    #[allow(clippy::all)]
     pub fn to_msg<M>(&self) -> Result<M, DecodeError>
     where
         M: Default + Name + Sized,
@@ -319,18 +288,6 @@ mod tests {
         let unpacked: Foo = any.to_msg().unwrap();
         println!("{unpacked:?}");
         assert_eq!(unpacked, msg)
-    }
-
-    #[test]
-    fn pack_unpack_with_downcast_test() {
-        let msg = Foo {
-            string: "Hello World!".to_string(),
-        };
-        let any = Any::try_pack(msg.clone()).unwrap();
-        println!("{any:?}");
-        let unpacked: &dyn MessageSerde = &any.unpack_as(Foo::default()).unwrap();
-        let downcast = unpacked.downcast_ref::<Foo>().unwrap();
-        assert_eq!(downcast, &msg);
     }
 
     #[test]

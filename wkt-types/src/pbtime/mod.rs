@@ -21,7 +21,6 @@ include!(concat!(env!("OUT_DIR"), "/pbtime/google.protobuf.rs"));
 
 ////////////////////////////////////////////////////////////////////////////////
 /// FROM prost-types/src/lib.rs
-/// with impl Name removed until stabilized
 ////////////////////////////////////////////////////////////////////////////////
 const NANOS_PER_SECOND: i32 = 1_000_000_000;
 const NANOS_MAX: i32 = NANOS_PER_SECOND - 1;

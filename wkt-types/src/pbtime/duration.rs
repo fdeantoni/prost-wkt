@@ -277,5 +277,39 @@ impl<'de> Deserialize<'de> for Duration {
     }
 }
 
+#[cfg(feature = "schemars")]
+mod schemars_impl {
+    use super::Duration;
+    use std::borrow::Cow;
+    use schemars::JsonSchema;
+    use schemars::gen::SchemaGenerator;
+    use schemars::schema::{InstanceType, Schema, SchemaObject};
 
+    impl JsonSchema for Duration {
+        fn schema_name() -> String {
+            "Duration".to_string()
+        }
 
+        fn schema_id() -> Cow<'static, str> {
+            Cow::Borrowed("prost_wkt_types::Duration")
+        }
+
+        fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
+            let mut schema = SchemaObject {
+                instance_type: Some(InstanceType::String.into()),
+                ..Default::default()
+            };
+
+            schema.metadata().description = Some("A duration in seconds with up to nine fractional digits, ending with 's'".to_string());
+            schema.metadata().examples = vec![
+                serde_json::json!("1s"),
+                serde_json::json!("1.5s"),
+                serde_json::json!("1.000000001s"),
+            ];
+
+            schema.string().pattern = Some(r"^\d+(\.\d{1,9})?s$".to_string());
+
+            Schema::Object(schema)
+        }
+    }
+}

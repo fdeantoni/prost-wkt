@@ -159,6 +159,16 @@ and that it can be deserialized as well.
 
 See the `example` sub-project for a fully functioning example.
 
+## Schemars ##
+This crate is compatible with [schemars](https://github.com/GREsau/schemars) if the feature `schemars` is enabled:
+
+```toml
+[dependencies]
+prost-wkt-types = { version = "0.6", features = ["schemars"] }
+```
+
+This will derive the [JsonSchema](https://docs.rs/schemars/latest/schemars/trait.JsonSchema.html) trait for the types in this crate so they can be used to generate JSON schema files.
+
 ## Known Problems ##
 
 ### oneOf types ###

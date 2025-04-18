@@ -321,3 +321,36 @@ impl<'de> Deserialize<'de> for Timestamp {
     }
 }
 
+#[cfg(feature = "schemars")]
+mod schemars_impl {
+    use super::Timestamp;
+    use std::borrow::Cow;
+    use schemars::JsonSchema;
+    use schemars::gen::SchemaGenerator;
+    use schemars::schema::{InstanceType, Schema, SchemaObject};
+
+    impl JsonSchema for Timestamp {
+        fn schema_name() -> String {
+            "Timestamp".to_string()
+        }
+
+        fn schema_id() -> Cow<'static, str> {
+            Cow::Borrowed("prost_wkt_types::Timestamp")
+        }
+
+        fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
+            let mut schema = SchemaObject {
+                instance_type: Some(InstanceType::String.into()),
+                ..Default::default()
+            };
+
+            schema.metadata().description = Some("A timestamp in RFC 3339 format".to_string());
+            schema.metadata().examples = vec![
+                serde_json::json!("2025-04-11T12:00:00Z"),
+                serde_json::json!("2025-04-11T12:00:00.123456789Z"),
+            ];
+
+            Schema::Object(schema)
+        }
+    }
+}

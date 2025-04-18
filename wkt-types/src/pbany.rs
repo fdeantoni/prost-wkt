@@ -179,6 +179,53 @@ impl<'de> Deserialize<'de> for Any {
     }
 }
 
+#[cfg(feature = "schemars")]
+mod schemars_impl {
+    use super::Any;
+    use std::borrow::Cow;
+    use schemars::{JsonSchema, Set};
+    use schemars::gen::SchemaGenerator;
+    use schemars::schema::{InstanceType, Schema, SchemaObject};
+
+    impl JsonSchema for Any {
+        fn schema_name() -> String {
+            "Any".to_string()
+        }
+
+        fn schema_id() -> Cow<'static, str> {
+            Cow::Borrowed("prost_wkt_types::Any")
+        }
+
+        fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
+            let mut schema = SchemaObject {
+                instance_type: Some(InstanceType::Object.into()),
+                ..Default::default()
+            };
+
+            schema.metadata().description = Some("Represents a dynamically typed protocol buffer message".to_string());
+            schema.metadata().examples = vec![serde_json::json!({
+                "@type": "type.googleapis.com/google.protobuf.Duration",
+                "value": "1.5s"
+            })];
+
+            let mut properties = schemars::Map::new();
+            properties.insert("@type".to_string(), SchemaObject {
+                instance_type: Some(InstanceType::String.into()),
+                ..Default::default()
+            }.into());
+            properties.insert("value".to_string(), SchemaObject {
+                instance_type: Some(InstanceType::String.into()),
+                ..Default::default()
+            }.into());
+
+            schema.object().properties = properties;
+            schema.object().required = Set::from(["@type".to_string(), "value".to_string()]);
+
+            Schema::Object(schema)
+        }
+    }
+}
+
 /// URL/resource name that uniquely identifies the type of the serialized protocol buffer message,
 /// e.g. `type.googleapis.com/google.protobuf.Duration`.
 ///

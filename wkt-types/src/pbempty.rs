@@ -8,6 +8,36 @@ impl From<()> for Empty {
     }
 }
 
+#[cfg(feature = "schemars")]
+mod schemars_impl {
+    use super::Empty;
+    use std::borrow::Cow;
+    use schemars::JsonSchema;
+    use schemars::gen::SchemaGenerator;
+    use schemars::schema::{InstanceType, Schema, SchemaObject};
+
+    impl JsonSchema for Empty {
+        fn schema_name() -> String {
+            "Empty".to_string()
+        }
+
+        fn schema_id() -> Cow<'static, str> {
+            Cow::Borrowed("prost_wkt_types::Empty")
+        }
+
+        fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
+            let mut schema = SchemaObject {
+                instance_type: Some(InstanceType::Object.into()),
+                ..Default::default()
+            };
+
+            schema.metadata().description = Some("Represents an empty message".to_string());
+
+            Schema::Object(schema)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 

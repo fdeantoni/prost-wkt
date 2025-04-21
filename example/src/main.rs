@@ -13,6 +13,7 @@ fn main() -> Result<(), AnyError> {
         data: "Hello World".to_string(),
         timestamp: Some(Utc::now().into()),
         content: Some(content),
+        flavor: Flavor::Chocolate.into(),
     };
 
     let mut request: Request = Request::default();

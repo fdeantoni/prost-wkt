@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 
 use prost_wkt_types::*;
+use serde_json::json;
 
 include!(concat!(env!("OUT_DIR"), "/my.messages.rs"));
 include!(concat!(env!("OUT_DIR"), "/my.requests.rs"));
@@ -34,5 +35,22 @@ fn main() -> Result<(), AnyError> {
             .expect("Failed to downcast message");
         println!("Unpacked: {unpacked_foo:?}");
     }
+
+    let foo_with_string_flavor = json!({
+        "data": "Hello World",
+        "timestamp": "2025-04-21T04:52:27.654981Z",
+        "content": {
+            "body": {
+                "someBool": true
+            }
+        },
+        "flavor": "CHOCOLATE"
+    });
+
+    match serde_json::from_value::<Foo>(foo_with_string_flavor) {
+        Ok(value) => println!("Deserialized with string enum: {value:?}"),
+        Err(error) => eprintln!("Failed to deserialize with string num: {error:?}"),
+    }
+
     Ok(())
 }

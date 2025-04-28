@@ -1,17 +1,28 @@
+# Release 0.6.1
+
+## What's Changed
+* bump protox version to match `prost` version being used. by @GeneralOneill in https://github.com/fdeantoni/prost-wkt/pull/70
+* Upgrade protobuf-src from 1.1.0 to 2.1.0 by @daniel-b2c2 in https://github.com/fdeantoni/prost-wkt/pull/71
+* feat: Add customization of type url generation by @asyade in https://github.com/fdeantoni/prost-wkt/pull/72
+* Add Schemars Support by @jayhf in https://github.com/fdeantoni/prost-wkt/pull/77
+
+**Full Changelog**: https://github.com/fdeantoni/prost-wkt/compare/v0.6.0...v0.6.1
+
+
 # Release 0.6.0
 
 ## What's Changed
 * Use an anonymous const rather than a dummy name by @CodingAnarchy in https://github.com/fdeantoni/prost-wkt/pull/65
 * Upgrade prost crates to 0.13 by @nickpresta in https://github.com/fdeantoni/prost-wkt/pull/68
 
-## Breakting Changes
+## Breaking Changes
 * All Prost 0.12 to 0.13 breaking changes
 * The `From<DateTime> for Timestamp` has been replaced by `TryFrom`.
 
 **Full Changelog**: https://github.com/fdeantoni/prost-wkt/compare/v0.5.1...v0.6.0
 
 
-# Releaes 0.5.2
+# Release 0.5.2
 
 **Note**: This release was yanked in favour of 0.6.0
 

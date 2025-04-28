@@ -304,7 +304,7 @@ stabilized.
 
 ## MSRV ##
 
-The minimum supported Rust version is Rust 1.70.0.
+The minimum supported Rust version is Rust 1.70.1.
 
 ## License ##
 

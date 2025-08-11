@@ -19,13 +19,13 @@ To use it, include this crate along with prost:
 
 ```toml
 [dependencies]
-prost = "0.13"
+prost = "0.14"
 prost-wkt = "0.6"
 prost-wkt-types = "0.6"
 serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
-prost-build = "0.13"
+prost-build = "0.14"
 prost-wkt-build = "0.6"
 ```
 

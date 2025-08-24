@@ -1,6 +1,6 @@
 [package]
 name = "prost-wkt-types"
-version = "0.6.1"
+version = "0.7.0"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fdeantoni/prost-wkt"
@@ -22,7 +22,7 @@ vendored-protoc = ["protobuf-src"]
 vendored-protox = ["protox"]
 
 [dependencies]
-prost-wkt = { version = "0.6.1", path = ".." }
+prost-wkt = { version = "0.7.0", path = ".." }
 prost = "0.14.1"
 serde = "1.0"
 serde_json = "1.0"
@@ -34,7 +34,7 @@ schemars = { version = "0.8", optional = true }
 prost = "0.14.1"
 prost-types = "0.14.1"
 prost-build = "0.14.1"
-prost-wkt-build = { version = "0.6.1", path = "../wkt-build" }
+prost-wkt-build = { version = "0.7.0", path = "../wkt-build" }
 regex = "1"
 protobuf-src = { version = "2.1.0", optional = true }
 protox = { version = "0.9.0", optional = true }

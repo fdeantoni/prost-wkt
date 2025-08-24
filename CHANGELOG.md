@@ -1,3 +1,11 @@
+# Release 0.7.0
+
+## What's Changed
+* Prost 0.14 by @jayhf in https://github.com/fdeantoni/prost-wkt/pull/83
+
+**Full Changelog**: https://github.com/fdeantoni/prost-wkt/compare/v0.6.1...v0.7.0
+
+
 # Release 0.6.1
 
 ## What's Changed

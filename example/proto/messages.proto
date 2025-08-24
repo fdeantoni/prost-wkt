@@ -16,4 +16,12 @@ message Foo {
     string data = 1;
     google.protobuf.Timestamp timestamp = 2;
     Content content = 3;
+    Flavor flavor = 4;
+}
+
+enum Flavor {
+    UNKNOWN_FLAVOR = 0;
+    VANILLA = 1;
+    CHOCOLATE = 2;
+    STRAWBERRY = 3;
 }

@@ -17,13 +17,14 @@ To use it, include this crate along with prost:
 
 ```toml
 [dependencies]
-prost = "0.13"
+prost = "0.14"
 prost-wkt = "0.7"
 prost-wkt-types = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
-prost-build = "0.13"
+prost-build = "0.14"
+prost-wkt-build = "0.7"
 ```
 
 In your `build.rs`, make sure to add the following options:
@@ -153,6 +154,16 @@ Notice that the request message is properly serialized to JSON as per the [proto
 and that it can be deserialized as well.
 
 See the `example` sub-project for a fully functioning example.
+
+## Schemars ##
+This crate is compatible with [schemars](https://github.com/GREsau/schemars) if the feature `schemars` is enabled:
+
+```toml
+[dependencies]
+prost-wkt-types = { version = "0.6", features = ["schemars"] }
+```
+
+This will derive the [JsonSchema](https://docs.rs/schemars/latest/schemars/trait.JsonSchema.html) trait for the types in this crate so they can be used to generate JSON schema files.
 
 ## Known Problems ##
 
@@ -290,7 +301,7 @@ Currently the `Name` traits have specifically not been implemented until this im
 
 ## MSRV ##
 
-The minimum supported Rust version is Rust 1.75.0.
+The minimum supported Rust version is Rust 1.70.1.
 
 ## License ##
 

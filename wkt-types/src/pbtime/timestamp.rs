@@ -116,19 +116,6 @@ impl Timestamp {
 //     }
 // }
 
-/// Implements the unstable/naive version of `Eq`: a basic equality check on the internal fields of the `Timestamp`.
-/// This implies that `normalized_ts != non_normalized_ts` even if `normalized_ts == non_normalized_ts.normalized()`.
-#[cfg(feature = "std")]
-impl Eq for Timestamp {}
-
-#[cfg(feature = "std")]
-impl std::hash::Hash for Timestamp {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.seconds.hash(state);
-        self.nanos.hash(state);
-    }
-}
-
 #[cfg(feature = "std")]
 impl From<std::time::SystemTime> for Timestamp {
     fn from(system_time: std::time::SystemTime) -> Timestamp {
@@ -318,5 +305,39 @@ impl<'de> Deserialize<'de> for Timestamp {
             }
         }
         deserializer.deserialize_str(TimestampVisitor)
+    }
+}
+
+#[cfg(feature = "schemars")]
+mod schemars_impl {
+    use super::Timestamp;
+    use std::borrow::Cow;
+    use schemars::JsonSchema;
+    use schemars::gen::SchemaGenerator;
+    use schemars::schema::{InstanceType, Schema, SchemaObject};
+
+    impl JsonSchema for Timestamp {
+        fn schema_name() -> String {
+            "Timestamp".to_string()
+        }
+
+        fn schema_id() -> Cow<'static, str> {
+            Cow::Borrowed("prost_wkt_types::Timestamp")
+        }
+
+        fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
+            let mut schema = SchemaObject {
+                instance_type: Some(InstanceType::String.into()),
+                ..Default::default()
+            };
+
+            schema.metadata().description = Some("A timestamp in RFC 3339 format".to_string());
+            schema.metadata().examples = vec![
+                serde_json::json!("2025-04-11T12:00:00Z"),
+                serde_json::json!("2025-04-11T12:00:00.123456789Z"),
+            ];
+
+            Schema::Object(schema)
+        }
     }
 }

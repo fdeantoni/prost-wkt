@@ -3,7 +3,7 @@ on: [push, pull_request]
 name: prost-wkt build
 
 env:
-  PROTOC_VERSION: 3.20.3
+  PROTOC_VERSION: 3.25.3
 
 jobs:
   build:
@@ -36,3 +36,63 @@ jobs:
         
       - name: execute test
         run: cargo test --workspace
+
+  feature-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        feature: [schemars, vendored-protox]
+        include:
+          - feature: schemars
+            test_name: schemars_test
+          - feature: vendored-protox
+            test_name: protox_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install toolchain (stable)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      - name: install protoc (for vendored-protox comparison)
+        uses: taiki-e/install-action@v2
+        with:
+          tool: protoc@${{ env.PROTOC_VERSION }}
+
+      - name: Build wkt-types with ${{ matrix.feature }} feature
+        run: cargo build --verbose --manifest-path wkt-types/Cargo.toml --features ${{ matrix.feature }}
+
+      - name: Run all tests with ${{ matrix.feature }} feature
+        run: cargo test --verbose --manifest-path wkt-types/Cargo.toml --features ${{ matrix.feature }}
+
+      - name: Run specific ${{ matrix.feature }} feature tests
+        run: cargo test --test ${{ matrix.test_name }} --features ${{ matrix.feature }} --manifest-path wkt-types/Cargo.toml
+
+  feature-combinations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install toolchain (stable)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      - name: install protoc
+        uses: taiki-e/install-action@v2
+        with:
+          tool: protoc@${{ env.PROTOC_VERSION }}
+
+      - name: Test with all features enabled
+        run: cargo test --verbose --manifest-path wkt-types/Cargo.toml --features "schemars,vendored-protox"
+
+      - name: Test feature-specific tests with all features
+        run: |
+          cargo test --test schemars_test --features "schemars,vendored-protox" --manifest-path wkt-types/Cargo.toml
+          cargo test --test protox_test --features "schemars,vendored-protox" --manifest-path wkt-types/Cargo.toml
+
+      - name: Test no optional features (baseline)
+        run: cargo test --verbose --manifest-path wkt-types/Cargo.toml --no-default-features --features std

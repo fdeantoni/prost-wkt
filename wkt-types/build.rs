@@ -24,6 +24,7 @@ fn build(dir: &Path, proto: &str) {
 
     #[cfg(feature = "vendored-protox")]
     {
+        use prost::Message;
         let file_descriptors = protox::compile([source.clone()], ["proto/".to_string()]).unwrap();
         std::fs::write(&descriptor_file, file_descriptors.encode_to_vec()).unwrap();
         prost_build.skip_protoc_run();

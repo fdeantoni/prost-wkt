@@ -30,87 +30,100 @@ In your `build.rs`, make sure to add the following options:
 
 ```rust
 use std::{env, path::PathBuf};
-use prost_wkt_build::*;
 
 fn main() {
     let out = PathBuf::from(env::var("OUT_DIR").unwrap());
     let descriptor_file = out.join("descriptors.bin");
     let mut prost_build = prost_build::Config::new();
     prost_build
+        .enable_type_names()
+        .type_name_domain(&[".my.requests", ".my.messages"], "type.googleapis.com")
         .type_attribute(
-            ".",
-            "#[derive(serde::Serialize,serde::Deserialize)]"
+            ".my.requests",
+            "#[derive(serde::Serialize, serde::Deserialize)] #[serde(default, rename_all=\"camelCase\")]"
         )
-        .extern_path(
-            ".google.protobuf.Any",
-            "::prost_wkt_types::Any"
+        .message_attribute(".my.requests.Request", "#[derive(::prost_wkt::MessageSerde)]")
+        .type_attribute(
+            ".my.messages.Foo",
+            "#[derive(serde::Serialize, serde::Deserialize)] #[serde(default, rename_all=\"camelCase\")]"
         )
-        .extern_path(
-            ".google.protobuf.Timestamp",
-            "::prost_wkt_types::Timestamp"
+        .message_attribute(".my.messages.Foo", "#[derive(::prost_wkt::MessageSerde)]")
+        .type_attribute(
+            ".my.messages.Content",
+            "#[derive(serde::Serialize, serde::Deserialize)] #[serde(rename_all=\"camelCase\")]"
         )
-        .extern_path(
-            ".google.protobuf.Value",
-            "::prost_wkt_types::Value"
-        )
+        .message_attribute(".my.messages.Content", "#[derive(::prost_wkt::MessageSerde)]")
+        .extern_path(".google.protobuf.Any", "::prost_wkt_types::Any")
+        .extern_path(".google.protobuf.Timestamp", "::prost_wkt_types::Timestamp")
+        .extern_path(".google.protobuf.Value", "::prost_wkt_types::Value")
         .file_descriptor_set_path(&descriptor_file)
-        .compile_protos(
-            &[
-                "proto/messages.proto"
-            ],
-            &["proto/"],
-        )
-        .unwrap();
-
-    let descriptor_bytes =
-        std::fs::read(descriptor_file)
-        .unwrap();
-
-    let descriptor =
-        FileDescriptorSet::decode(&descriptor_bytes[..])
+        .compile_protos(&["proto/messages.proto", "proto/requests.proto"], &["proto/"])
         .unwrap();
 }
 ```
 
-The above configuration will include `Serialize`, and `Deserialize` on each generated struct. This will allow you to use `serde` fully. Moreover, it ensures that the `Any` type is deserialized properly as JSON. For example, assume we have the following messages defined in our proto file:
+The above configuration will include `Serialize`, and `Deserialize` on each generated struct. The key addition is the `#[derive(::prost_wkt::MessageSerde)]` derive macro on message types that need to be packed/unpacked with `Any`. This macro automatically implements the `MessageSerde` trait which enables JSON serialization/deserialization and packing/unpacking support. For example, assume we have the following messages defined in our proto file:
 
 ```proto
+// requests.proto
 syntax = "proto3";
 
 import "google/protobuf/any.proto";
-import "google/protobuf/timestamp.proto";
 
-package my.pkg;
+package my.requests;
 
 message Request {
     string requestId = 1;
     google.protobuf.Any payload = 2;
 }
+```
+
+```proto
+// messages.proto
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package my.messages;
+
+message Content {
+    oneof body {
+        string some_string = 1;
+        bool some_bool = 2;
+        float some_float = 3;
+    }
+}
 
 message Foo {
     string data = 1;
     google.protobuf.Timestamp timestamp = 2;
+    Content content = 3;
 }
 ```
 
 After generating the rust structs for the above using `prost-build` with the above configuration, you will then be able to do the following:
 
 ```rust
-use serde::{Deserialize, Serialize};
 use chrono::prelude::*;
 
 use prost_wkt_types::*;
 
-include!(concat!(env!("OUT_DIR"), "/my.pkg.rs"));
+include!(concat!(env!("OUT_DIR"), "/my.messages.rs"));
+include!(concat!(env!("OUT_DIR"), "/my.requests.rs"));
 
 fn main() -> Result<(), AnyError> {
+    let content: Content = Content {
+        body: Some(content::Body::SomeBool(true)),
+    };
+
     let foo_msg: Foo = Foo {
         data: "Hello World".to_string(),
         timestamp: Some(Utc::now().into()),
+        content: Some(content),
     };
 
     let mut request: Request = Request::default();
-    let any = Any::try_pack(foo_msg)?;
+    let any = Any::from_msg(&foo_msg)?;
     request.request_id = "test1".to_string();
     request.payload = Some(any);
 
@@ -121,14 +134,13 @@ fn main() -> Result<(), AnyError> {
     let back: Request = serde_json::from_str(&json).expect("Failed to deserialize request");
 
     if let Some(payload) = back.payload {
-        let unpacked: Box< dyn MessageSerde> = payload.try_unpack()?;
-
+        let unpacked: Box<dyn MessageSerde> = payload.try_unpack()?;
         let unpacked_foo: &Foo = unpacked
             .downcast_ref::<Foo>()
-            .expect("Failed to downcast payload to Foo");
-
+            .expect("Failed to downcast message");
         println!("Unpacked: {:?}", unpacked_foo);
     }
+    Ok(())
 }
 ```
 
@@ -139,12 +151,19 @@ JSON:
 {
   "requestId": "test1",
   "payload": {
-    "@type": "type.googleapis.com/my.pkg.Foo",
-    "data": "Hello World",
-    "timestamp": "2020-05-25T12:19:57.755998Z"
+    "@type": "type.googleapis.com/my.messages.Foo",
+    "value": {
+      "data": "Hello World",
+      "timestamp": "2020-05-25T12:19:57.755998Z",
+      "content": {
+        "body": {
+          "someBool": true
+        }
+      }
+    }
   }
 }
-Unpacked: Foo { data: "Hello World", timestamp: Some(Timestamp { seconds: 1590409197, nanos: 755998000 }) }
+Unpacked: Foo { data: "Hello World", timestamp: Some(Timestamp { seconds: 1590409197, nanos: 755998000 }), content: Some(Content { body: Some(SomeBool(true)) }) }
 ```
 
 Notice that the request message is properly serialized to JSON as per the [protobuf specification](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Any),
@@ -243,44 +262,28 @@ fn main() {
     let descriptor_file = out.join("descriptors.bin");
     let mut prost_build = prost_build::Config::new();
     prost_build
+        .enable_type_names()
+        .type_name_domain(&[".my.messages"], "type.googleapis.com")
         .type_attribute(
-            ".my.pkg.MyEnum",
+            ".my.messages.MyEnum",
             "#[derive(serde::Serialize,serde::Deserialize)]"
         )
         .type_attribute(
-            ".my.pkg.MyMessage",
+            ".my.messages.MyMessage",
             "#[derive(serde::Serialize,serde::Deserialize)] #[serde(default)]"
         )
+        .message_attribute(".my.messages.MyMessage", "#[derive(::prost_wkt::MessageSerde)]")
         .type_attribute(
-            ".my.pkg.SomeOne.body",
+            ".my.messages.SomeOne.body",
             "#[derive(serde::Serialize,serde::Deserialize)]"
         )
-        .extern_path(
-            ".google.protobuf.Any",
-            "::prost_wkt_types::Any"
-        )
-        .extern_path(
-            ".google.protobuf.Timestamp",
-            "::prost_wkt_types::Timestamp"
-        )
-        .extern_path(
-            ".google.protobuf.Value",
-            "::prost_wkt_types::Value"
-        )
+        .message_attribute(".my.messages.SomeOne", "#[derive(::prost_wkt::MessageSerde)]")
+        .extern_path(".google.protobuf.Any", "::prost_wkt_types::Any")
+        .extern_path(".google.protobuf.Timestamp", "::prost_wkt_types::Timestamp")
+        .extern_path(".google.protobuf.Value", "::prost_wkt_types::Value")
         .file_descriptor_set_path(&descriptor_file)
-        .compile_protos(
-            &[
-                "proto/messages.proto"
-            ],
-            &["proto/"],
-        )
+        .compile_protos(&["proto/messages.proto"], &["proto/"])
         .unwrap();
-
-    let descriptor_bytes =
-        std::fs::read(descriptor_file).unwrap();
-
-    let descriptor =
-        FileDescriptorSet::decode(&descriptor_bytes[..]).unwrap();
 }
 ```
 

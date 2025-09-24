@@ -1,3 +1,9 @@
+# Release 0.8.0 (Draft)
+
+## What's Changed
+* Switched to using wkt-derive instead of wkt-build by @wtzhang23
+
+
 # Release 0.7.0
 
 ## What's Changed

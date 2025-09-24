@@ -18,13 +18,12 @@ To use it, include this crate along with prost:
 ```toml
 [dependencies]
 prost = "0.14"
-prost-wkt = "0.7"
-prost-wkt-types = "0.7"
+prost-wkt = "0.8"
+prost-wkt-types = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 
 [build-dependencies]
 prost-build = "0.14"
-prost-wkt-build = "0.7"
 ```
 
 In your `build.rs`, make sure to add the following options:
@@ -70,8 +69,6 @@ fn main() {
     let descriptor =
         FileDescriptorSet::decode(&descriptor_bytes[..])
         .unwrap();
-
-    prost_wkt_build::add_serde(out, descriptor);
 }
 ```
 
@@ -160,7 +157,7 @@ This crate is compatible with [schemars](https://github.com/GREsau/schemars) if 
 
 ```toml
 [dependencies]
-prost-wkt-types = { version = "0.6", features = ["schemars"] }
+prost-wkt-types = { version = "0.8", features = ["schemars"] }
 ```
 
 This will derive the [JsonSchema](https://docs.rs/schemars/latest/schemars/trait.JsonSchema.html) trait for the types in this crate so they can be used to generate JSON schema files.
@@ -284,8 +281,6 @@ fn main() {
 
     let descriptor =
         FileDescriptorSet::decode(&descriptor_bytes[..]).unwrap();
-
-    prost_wkt_build::add_serde(out, descriptor);
 }
 ```
 
@@ -297,11 +292,10 @@ Contributions are welcome!
 
 When upgrading Prost to the latest version, make sure the latest changes from `prost-types` are incorporated into `prost-wkt-types` to ensure full compatibility.
 
-Currently the `Name` traits have specifically not been implemented until this implementation in Prost has fully stabilized.
 
 ## MSRV ##
 
-The minimum supported Rust version is Rust 1.70.1.
+The minimum supported Rust version is Rust 1.75.0.
 
 ## License ##
 
@@ -309,4 +303,4 @@ The minimum supported Rust version is Rust 1.70.1.
 
 See [LICENSE](LICENSE) for details.
 
-Copyright 2023 Ferdinand de Antoni
+Copyright 2025 Ferdinand de Antoni

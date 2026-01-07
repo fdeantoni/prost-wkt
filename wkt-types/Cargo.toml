@@ -28,7 +28,7 @@ serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 chrono = { version = "0.4.27", default-features = false, features = ["serde"] }
-schemars = { version = "0.8", optional = true }
+schemars = { version = "1.2", optional = true }
 
 [build-dependencies]
 prost = "0.14.1"

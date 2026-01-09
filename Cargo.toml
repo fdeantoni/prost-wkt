@@ -21,4 +21,7 @@ serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 chrono = { version = "0.4.27", default-features = false, features = ["serde"] }
+prost-wkt = { version = "0.7.1", path = "wkt" }
+prost-wkt-build = { version = "0.7.1", path = "wkt-build" }
+prost-wkt-types = { version = "0.7.1", path = "wkt-types" }
 

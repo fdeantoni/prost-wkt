@@ -299,12 +299,9 @@ Contributions are welcome!
 
 When upgrading Prost to the latest version, make sure the latest changes from `prost-types` are incorporated into `prost-wkt-types` to ensure full compatibility.
 
-Currently the `Name` traits have specifically not been implemented until this implementation in Prost has fully
-stabilized. 
-
 ## MSRV ##
 
-The minimum supported Rust version is Rust 1.70.1.
+The minimum supported Rust version is Rust 1.82.
 
 ## License ##
 
@@ -312,4 +309,4 @@ The minimum supported Rust version is Rust 1.70.1.
 
 See [LICENSE](LICENSE) for details.
 
-Copyright 2023 Ferdinand de Antoni
+Copyright 2025 Ferdinand de Antoni

@@ -1,3 +1,13 @@
+# Release 0.7.1
+
+## What's Changed
+* Converted to proper cargo workspace layout
+* Updated rust-version in line with prost to 1.82
+* Updated schema-rs from 0.8.0 to 1.2.0 by @maxwase in https://github.com/fdeantoni/prost-wkt/pull/85
+
+**Full Changelog**: https://github.com/fdeantoni/prost-wkt/compare/v0.7.0...v0.7.1
+
+
 # Release 0.7.0
 
 ## What's Changed

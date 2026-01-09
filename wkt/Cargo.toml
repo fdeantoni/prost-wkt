@@ -1,5 +1,5 @@
 [package]
-name = "prost-wkt-build"
+name = "prost-wkt"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -12,7 +12,9 @@ rust-version.workspace = true
 
 [dependencies]
 prost.workspace = true
-prost-types.workspace = true
-prost-build.workspace = true
-quote = "1.0.43"
-heck = { version = ">=0.4, <=0.5" }
+serde.workspace = true
+serde_json.workspace = true
+serde_derive.workspace = true
+chrono.workspace = true
+inventory = "0.3.21"
+typetag = "0.2.21"

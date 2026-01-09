@@ -11,9 +11,9 @@ impl From<()> for Empty {
 #[cfg(feature = "schemars")]
 mod schemars_impl {
     use super::Empty;
-    use std::borrow::Cow;
-    use schemars::{json_schema, JsonSchema, Schema};
     use schemars::generate::SchemaGenerator;
+    use schemars::{json_schema, JsonSchema, Schema};
+    use std::borrow::Cow;
 
     impl JsonSchema for Empty {
         fn schema_name() -> Cow<'static, str> {
@@ -21,7 +21,7 @@ mod schemars_impl {
         }
 
         fn schema_id() -> Cow<'static, str> {
-            concat!(module_path!(), "::Empty").into()
+            Cow::Borrowed("prost_wkt_types::Empty")
         }
 
         fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
@@ -49,7 +49,8 @@ mod tests {
 
     #[test]
     fn deserialize_empty() {
-        let msg: Empty = serde_json::from_str("{}").expect("Could not deserialize `{}` to an Empty struct!");
+        let msg: Empty =
+            serde_json::from_str("{}").expect("Could not deserialize `{}` to an Empty struct!");
         assert_eq!(msg, EMPTY);
     }
 

@@ -311,9 +311,9 @@ impl<'de> Deserialize<'de> for Timestamp {
 #[cfg(feature = "schemars")]
 mod schemars_impl {
     use super::Timestamp;
-    use std::borrow::Cow;
-    use schemars::{json_schema, JsonSchema, Schema};
     use schemars::generate::SchemaGenerator;
+    use schemars::{json_schema, JsonSchema, Schema};
+    use std::borrow::Cow;
 
     impl JsonSchema for Timestamp {
         fn schema_name() -> Cow<'static, str> {
@@ -321,7 +321,7 @@ mod schemars_impl {
         }
 
         fn schema_id() -> Cow<'static, str> {
-            concat!(module_path!(), "::Timestamp").into()
+            Cow::Borrowed("prost_wkt_types::Timestamp")
         }
 
         fn json_schema(_gen: &mut SchemaGenerator) -> Schema {

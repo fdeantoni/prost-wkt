@@ -182,9 +182,10 @@ impl From<Duration> for chrono::Duration {
         // A call to `normalize` should capture all out-of-bound sitations hopefully
         // ensuring a panic never happens! Ideally this implementation should be
         // deprecated in favour of TryFrom but unfortunately having `TryFrom` along with
-        // `From` causes a conflict.        
+        // `From` causes a conflict.
         value.normalize();
-        let s = chrono::TimeDelta::try_seconds(value.seconds).expect("invalid or out-of-range seconds");
+        let s =
+            chrono::TimeDelta::try_seconds(value.seconds).expect("invalid or out-of-range seconds");
         let ns = chrono::Duration::nanoseconds(value.nanos as i64);
         s + ns
     }
@@ -272,9 +273,9 @@ impl<'de> Deserialize<'de> for Duration {
 #[cfg(feature = "schemars")]
 mod schemars_impl {
     use super::Duration;
-    use std::borrow::Cow;
-    use schemars::{json_schema, JsonSchema, Schema};
     use schemars::generate::SchemaGenerator;
+    use schemars::{json_schema, JsonSchema, Schema};
+    use std::borrow::Cow;
 
     impl JsonSchema for Duration {
         fn schema_name() -> Cow<'static, str> {
@@ -282,7 +283,7 @@ mod schemars_impl {
         }
 
         fn schema_id() -> Cow<'static, str> {
-            concat!(module_path!(), "::Duration").into()
+            Cow::Borrowed("prost_wkt_types::Duration")
         }
 
         fn json_schema(_gen: &mut SchemaGenerator) -> Schema {

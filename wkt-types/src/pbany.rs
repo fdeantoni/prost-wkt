@@ -191,7 +191,7 @@ mod schemars_impl {
         }
 
         fn schema_id() -> Cow<'static, str> {
-            concat!(module_path!(), "::Any").into()
+            Cow::Borrowed("prost_wkt_types::Any")
         }
 
         fn json_schema(_gen: &mut SchemaGenerator) -> Schema {

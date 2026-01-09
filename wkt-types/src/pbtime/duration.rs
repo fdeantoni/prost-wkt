@@ -182,9 +182,10 @@ impl From<Duration> for chrono::Duration {
         // A call to `normalize` should capture all out-of-bound sitations hopefully
         // ensuring a panic never happens! Ideally this implementation should be
         // deprecated in favour of TryFrom but unfortunately having `TryFrom` along with
-        // `From` causes a conflict.        
+        // `From` causes a conflict.
         value.normalize();
-        let s = chrono::TimeDelta::try_seconds(value.seconds).expect("invalid or out-of-range seconds");
+        let s =
+            chrono::TimeDelta::try_seconds(value.seconds).expect("invalid or out-of-range seconds");
         let ns = chrono::Duration::nanoseconds(value.nanos as i64);
         s + ns
     }
@@ -272,14 +273,13 @@ impl<'de> Deserialize<'de> for Duration {
 #[cfg(feature = "schemars")]
 mod schemars_impl {
     use super::Duration;
+    use schemars::generate::SchemaGenerator;
+    use schemars::{json_schema, JsonSchema, Schema};
     use std::borrow::Cow;
-    use schemars::JsonSchema;
-    use schemars::gen::SchemaGenerator;
-    use schemars::schema::{InstanceType, Schema, SchemaObject};
 
     impl JsonSchema for Duration {
-        fn schema_name() -> String {
-            "Duration".to_string()
+        fn schema_name() -> Cow<'static, str> {
+            Cow::Borrowed("Duration")
         }
 
         fn schema_id() -> Cow<'static, str> {
@@ -287,21 +287,16 @@ mod schemars_impl {
         }
 
         fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
-            let mut schema = SchemaObject {
-                instance_type: Some(InstanceType::String.into()),
-                ..Default::default()
-            };
-
-            schema.metadata().description = Some("A duration in seconds with up to nine fractional digits, ending with 's'".to_string());
-            schema.metadata().examples = vec![
-                serde_json::json!("1s"),
-                serde_json::json!("1.5s"),
-                serde_json::json!("1.000000001s"),
-            ];
-
-            schema.string().pattern = Some(r"^\d+(\.\d{1,9})?s$".to_string());
-
-            Schema::Object(schema)
+            json_schema!({
+                "type": "string",
+                "description": "A duration in seconds with up to nine fractional digits, ending with 's'",
+                "examples": [
+                    "1s",
+                    "1.5s",
+                    "1.000000001s",
+                ],
+                "pattern": r"^\d+(\.\d{1,9})?s$",
+            })
         }
     }
 }

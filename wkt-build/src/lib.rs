@@ -13,11 +13,9 @@ pub struct SerdeOptions {
     type_url_generator: Box<dyn Fn(&str, &str) -> String + 'static>,
 }
 
-
 pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
     add_serde_with_options(out, descriptor, SerdeOptions::default())
 }
-
 
 pub fn add_serde_with_options(out: PathBuf, descriptor: FileDescriptorSet, options: SerdeOptions) {
     for fd in &descriptor.file {
@@ -110,32 +108,35 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
     writeln!(rust_file, "{}", &tokens).unwrap();
 }
 
-
 impl Default for SerdeOptions {
     fn default() -> Self {
         Self {
-            type_url_generator: Box::new(|package, message| format!("type.googleapis.com/{}.{}", package, message)),
+            type_url_generator: Box::new(|package, message| {
+                format!("type.googleapis.com/{}.{}", package, message)
+            }),
         }
     }
 }
 
 impl SerdeOptions {
     /// Set a custom type url generator.
-    /// 
+    ///
     /// The generator is a function that takes a package name and a message name and returns a type url.
     /// I.e by default the type url is will be `type.googleapis.com/{package}.{message}` but you can change it to anything you want according to your needs.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```rust
     /// # use prost_wkt_build::SerdeOptions;
     /// let options = SerdeOptions::default().with_custom_type_url_generator(|package, message| format!("my.custom.type.url/{}.{}", package, message));
     /// ```
-    /// 
-    /// 
-    pub fn with_custom_type_url_generator<F: Fn(&str, &str) -> String + 'static>(mut self, generator: F) -> Self {
+    ///
+    ///
+    pub fn with_custom_type_url_generator<F: Fn(&str, &str) -> String + 'static>(
+        mut self,
+        generator: F,
+    ) -> Self {
         self.type_url_generator = Box::new(generator);
         self
     }
-
 }

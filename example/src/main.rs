@@ -6,8 +6,9 @@ include!(concat!(env!("OUT_DIR"), "/my.messages.rs"));
 include!(concat!(env!("OUT_DIR"), "/my.requests.rs"));
 
 fn main() -> Result<(), AnyError> {
-
-    let content: Content = Content { body: Some(content::Body::SomeBool(true)) };
+    let content: Content = Content {
+        body: Some(content::Body::SomeBool(true)),
+    };
 
     let foo_msg: Foo = Foo {
         data: "Hello World".to_string(),

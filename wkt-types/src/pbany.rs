@@ -54,11 +54,11 @@ impl Any {
     /// Packs a message into an `Any` containing a `type_url` which will take the format
     /// of `type.googleapis.com/package_name.struct_name`, and a value containing the
     /// encoded message.
-    pub fn try_pack<T>(message: T) -> Result<Self, AnyError>
+    pub fn try_pack<T>(message: &T) -> Result<Self, AnyError>
     where
         T: Message + MessageSerde + Default,
     {
-        let type_url = MessageSerde::type_url(&message).to_string();
+        let type_url = MessageSerde::type_url(message).to_string();
         // Serialize the message into a value
         let mut buf = Vec::with_capacity(message.encoded_len());
         message.encode(&mut buf)?;
@@ -303,7 +303,7 @@ mod tests {
         let msg = Foo {
             string: "Hello World!".to_string(),
         };
-        let any = Any::try_pack(msg.clone()).unwrap();
+        let any = Any::try_pack(&msg).unwrap();
         println!("{any:?}");
         let unpacked = any.unpack_as(Foo::default()).unwrap();
         println!("{unpacked:?}");
@@ -315,7 +315,7 @@ mod tests {
         let msg = Foo {
             string: "Hello World!".to_string(),
         };
-        let any = Any::try_pack(msg.clone()).unwrap();
+        let any = Any::try_pack(&msg).unwrap();
         println!("{any:?}");
         let unpacked: &dyn MessageSerde = &any.unpack_as(Foo::default()).unwrap();
         let downcast = unpacked.downcast_ref::<Foo>().unwrap();

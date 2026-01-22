@@ -46,6 +46,5 @@ fn build(dir: &Path, proto: &str) {
         .file_descriptor_set_path(&descriptor_file)
         .out_dir(&out)
         .compile_protos(&[source], &["proto/".to_string()])
-        .compile_protos(&[source], &["proto/".to_string()])
         .unwrap();
 }

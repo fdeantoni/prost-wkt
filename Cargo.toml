@@ -1,9 +1,9 @@
 [workspace]
-members = [ "wkt", "wkt-build", "wkt-types", "example" ]
+members = [ "wkt", "wkt-derive", "wkt-types", "example" ]
 resolver = "2"
 
 [workspace.package]
-version = "0.7.1"
+version = "0.8.0"
 authors = ["fdeantoni <fdeantoni@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fdeantoni/prost-wkt"
@@ -20,9 +20,10 @@ prost-build = "0.14.1"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
+serde-value = "0.7"
 erased-serde = "0.4"
 chrono = { version = "0.4.27", default-features = false, features = ["serde"] }
-prost-wkt = { version = "0.7.1", path = "wkt" }
-prost-wkt-build = { version = "0.7.1", path = "wkt-build" }
-prost-wkt-types = { version = "0.7.1", path = "wkt-types" }
+prost-wkt-derive = { version = "0.8.0", path = "wkt-derive" }
+prost-wkt = { version = "0.8.0", path = "wkt" }
+prost-wkt-types = { version = "0.8.0", path = "wkt-types" }
 

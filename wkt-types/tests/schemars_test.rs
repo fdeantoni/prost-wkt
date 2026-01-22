@@ -1,21 +1,15 @@
 #[cfg(feature = "schemars")]
 mod schemars_tests {
     use prost_wkt_types::*;
-    use schemars::{JsonSchema, gen::SchemaGenerator, schema::Schema};
+    use schemars::{generate::SchemaGenerator, JsonSchema, Schema};
 
     #[test]
     fn test_empty_schema_generation() {
         let schema = Empty::json_schema(&mut SchemaGenerator::default());
+        let json = serde_json::to_value(&schema).unwrap();
 
-        if let Schema::Object(mut schema_obj) = schema {
-            assert!(schema_obj.instance_type.is_some());
-            assert!(schema_obj.metadata().description.is_some());
-
-            let description = schema_obj.metadata().description.as_ref().unwrap();
-            assert_eq!(description, "Represents an empty message");
-        } else {
-            panic!("Expected Schema::Object for Empty");
-        }
+        assert_eq!(json["type"], "object");
+        assert_eq!(json["description"], "Represents an empty message");
     }
 
     #[test]
@@ -31,16 +25,11 @@ mod schemars_tests {
     #[test]
     fn test_timestamp_schema_generation() {
         let schema = Timestamp::json_schema(&mut SchemaGenerator::default());
+        let json = serde_json::to_value(&schema).unwrap();
 
-        if let Schema::Object(mut schema_obj) = schema {
-            assert!(schema_obj.instance_type.is_some());
-            assert!(schema_obj.metadata().description.is_some());
-
-            let description = schema_obj.metadata().description.as_ref().unwrap();
-            assert!(description.contains("timestamp"));
-        } else {
-            panic!("Expected Schema::Object for Timestamp");
-        }
+        assert_eq!(json["type"], "string");
+        let description = json["description"].as_str().unwrap();
+        assert!(description.contains("timestamp"), "Description should contain 'timestamp': {}", description);
     }
 
     #[test]
@@ -56,16 +45,11 @@ mod schemars_tests {
     #[test]
     fn test_duration_schema_generation() {
         let schema = Duration::json_schema(&mut SchemaGenerator::default());
+        let json = serde_json::to_value(&schema).unwrap();
 
-        if let Schema::Object(mut schema_obj) = schema {
-            assert!(schema_obj.instance_type.is_some());
-            assert!(schema_obj.metadata().description.is_some());
-
-            let description = schema_obj.metadata().description.as_ref().unwrap();
-            assert!(description.contains("duration"));
-        } else {
-            panic!("Expected Schema::Object for Duration");
-        }
+        assert_eq!(json["type"], "string");
+        let description = json["description"].as_str().unwrap();
+        assert!(description.contains("duration"), "Description should contain 'duration': {}", description);
     }
 
     #[test]
@@ -81,16 +65,11 @@ mod schemars_tests {
     #[test]
     fn test_any_schema_generation() {
         let schema = Any::json_schema(&mut SchemaGenerator::default());
+        let json = serde_json::to_value(&schema).unwrap();
 
-        if let Schema::Object(mut schema_obj) = schema {
-            assert!(schema_obj.instance_type.is_some());
-            assert!(schema_obj.metadata().description.is_some());
-
-            let description = schema_obj.metadata().description.as_ref().unwrap();
-            assert!(description.contains("dynamically typed"));
-        } else {
-            panic!("Expected Schema::Object for Any");
-        }
+        assert_eq!(json["type"], "object");
+        let description = json["description"].as_str().unwrap();
+        assert!(description.contains("dynamically typed"), "Description should contain 'dynamically typed': {}", description);
     }
 
     #[test]
@@ -113,16 +92,16 @@ mod schemars_tests {
         let duration_schema = Duration::json_schema(&mut generator);
         let any_schema = Any::json_schema(&mut generator);
 
-        // Verify they're all objects
-        assert!(matches!(empty_schema, Schema::Object(_)));
-        assert!(matches!(timestamp_schema, Schema::Object(_)));
-        assert!(matches!(duration_schema, Schema::Object(_)));
-        assert!(matches!(any_schema, Schema::Object(_)));
+        // Verify they can all be serialized to JSON
+        assert!(serde_json::to_value(&empty_schema).is_ok());
+        assert!(serde_json::to_value(&timestamp_schema).is_ok());
+        assert!(serde_json::to_value(&duration_schema).is_ok());
+        assert!(serde_json::to_value(&any_schema).is_ok());
     }
 
     #[test]
     fn test_schema_metadata_consistency() {
-        let types = vec![
+        let types: Vec<(std::borrow::Cow<'static, str>, std::borrow::Cow<'static, str>, Schema)> = vec![
             (Empty::schema_name(), Empty::schema_id(), Empty::json_schema(&mut SchemaGenerator::default())),
             (Timestamp::schema_name(), Timestamp::schema_id(), Timestamp::json_schema(&mut SchemaGenerator::default())),
             (Duration::schema_name(), Duration::schema_id(), Duration::json_schema(&mut SchemaGenerator::default())),
@@ -134,16 +113,13 @@ mod schemars_tests {
             assert!(!name.is_empty());
 
             // Verify id contains the type name
-            assert!(id.contains(&name));
+            assert!(id.contains(name.as_ref()), "ID '{}' should contain name '{}'", id, name);
 
-            // Verify schema is an object with metadata
-            if let Schema::Object(mut schema_obj) = schema {
-                assert!(schema_obj.metadata().description.is_some());
-                let description = schema_obj.metadata().description.as_ref().unwrap();
-                assert!(!description.is_empty());
-            } else {
-                panic!("Expected Schema::Object for {}", name);
-            }
+            // Verify schema can be serialized and has a description
+            let json = serde_json::to_value(&schema).unwrap();
+            assert!(json.get("description").is_some(), "Schema for {} should have a description", name);
+            let description = json["description"].as_str().unwrap();
+            assert!(!description.is_empty(), "Description for {} should not be empty", name);
         }
     }
 

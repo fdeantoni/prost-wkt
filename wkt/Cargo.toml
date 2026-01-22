@@ -1,5 +1,5 @@
 [package]
-name = "prost-wkt-example"
+name = "prost-wkt"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -9,17 +9,12 @@ description.workspace = true
 readme.workspace = true
 documentation.workspace = true
 rust-version.workspace = true
-publish = false
 
 [dependencies]
 prost.workspace = true
-prost-wkt.workspace = true
-prost-wkt-types.workspace = true
 serde.workspace = true
-serde_derive.workspace = true
 serde_json.workspace = true
-chrono = { workspace = true, default-features = false, features = ["clock", "serde"] }
-
-[build-dependencies]
-prost-build.workspace = true
-prost-wkt-build.workspace = true
+serde_derive.workspace = true
+chrono.workspace = true
+inventory = "0.3.21"
+typetag = "0.2.21"

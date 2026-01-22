@@ -197,14 +197,13 @@ impl<'de> Deserialize<'de> for Any {
 #[cfg(feature = "schemars")]
 mod schemars_impl {
     use super::Any;
+    use schemars::generate::SchemaGenerator;
+    use schemars::{json_schema, JsonSchema, Schema};
     use std::borrow::Cow;
-    use schemars::{JsonSchema, Set};
-    use schemars::gen::SchemaGenerator;
-    use schemars::schema::{InstanceType, Schema, SchemaObject};
 
     impl JsonSchema for Any {
-        fn schema_name() -> String {
-            "Any".to_string()
+        fn schema_name() -> Cow<'static, str> {
+            Cow::Borrowed("Any")
         }
 
         fn schema_id() -> Cow<'static, str> {
@@ -212,31 +211,21 @@ mod schemars_impl {
         }
 
         fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
-            let mut schema = SchemaObject {
-                instance_type: Some(InstanceType::Object.into()),
-                ..Default::default()
-            };
-
-            schema.metadata().description = Some("Represents a dynamically typed protocol buffer message".to_string());
-            schema.metadata().examples = vec![serde_json::json!({
-                "@type": "type.googleapis.com/google.protobuf.Duration",
-                "value": "1.5s"
-            })];
-
-            let mut properties = schemars::Map::new();
-            properties.insert("@type".to_string(), SchemaObject {
-                instance_type: Some(InstanceType::String.into()),
-                ..Default::default()
-            }.into());
-            properties.insert("value".to_string(), SchemaObject {
-                instance_type: Some(InstanceType::String.into()),
-                ..Default::default()
-            }.into());
-
-            schema.object().properties = properties;
-            schema.object().required = Set::from(["@type".to_string(), "value".to_string()]);
-
-            Schema::Object(schema)
+            json_schema!({
+                "type": "object",
+                "description": "Represents a dynamically typed protocol buffer message",
+                "examples": [
+                    {
+                        "@type": "type.googleapis.com/google.protobuf.Duration",
+                        "value": "1.5s",
+                    }
+                ],
+                "properties": {
+                    "@type": { "type": "string" },
+                    "value": { "type": "string" },
+                },
+                "required": ["@type", "value"],
+            })
         }
     }
 }

@@ -295,10 +295,9 @@ Contributions are welcome!
 
 When upgrading Prost to the latest version, make sure the latest changes from `prost-types` are incorporated into `prost-wkt-types` to ensure full compatibility.
 
-
 ## MSRV ##
 
-The minimum supported Rust version is Rust 1.75.0.
+The minimum supported Rust version is Rust 1.82.
 
 ## License ##
 

@@ -16,7 +16,7 @@ jobs:
           - windows-latest
         rust:
           - stable
-          - 1.82
+          - 1.85
 
     steps:
       - uses: actions/checkout@v4

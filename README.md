@@ -301,7 +301,7 @@ When upgrading Prost to the latest version, make sure the latest changes from `p
 
 ## MSRV ##
 
-The minimum supported Rust version is Rust 1.82.
+The minimum supported Rust version is Rust 1.85.
 
 ## License ##
 

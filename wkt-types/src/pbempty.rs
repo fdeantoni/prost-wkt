@@ -33,6 +33,30 @@ mod schemars_impl {
     }
 }
 
+#[cfg(feature = "utoipa")]
+mod utoipa_impl {
+    use super::Empty;
+    use std::borrow::Cow;
+    use utoipa::openapi::schema::{ObjectBuilder, SchemaType, Type};
+    use utoipa::openapi::{RefOr, Schema};
+    use utoipa::{PartialSchema, ToSchema};
+
+    impl PartialSchema for Empty {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(SchemaType::Type(Type::Object))
+                .description(Some("Represents an empty message"))
+                .into()
+        }
+    }
+
+    impl ToSchema for Empty {
+        fn name() -> Cow<'static, str> {
+            Cow::Borrowed("Empty")
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
 

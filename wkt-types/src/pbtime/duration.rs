@@ -300,3 +300,32 @@ mod schemars_impl {
         }
     }
 }
+
+#[cfg(feature = "utoipa")]
+mod utoipa_impl {
+    use super::Duration;
+    use std::borrow::Cow;
+    use utoipa::openapi::schema::{KnownFormat, ObjectBuilder, SchemaFormat, SchemaType, Type};
+    use utoipa::openapi::{RefOr, Schema};
+    use utoipa::{PartialSchema, ToSchema};
+
+    impl PartialSchema for Duration {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(SchemaType::Type(Type::String))
+                .format(Some(SchemaFormat::KnownFormat(KnownFormat::Duration)))
+                .description(Some(
+                    "A duration in seconds with up to nine fractional digits, ending with 's'",
+                ))
+                .examples(["1s", "1.5s", "1.000000001s"])
+                .pattern(Some(r"^\d+(\.\d{1,9})?s$"))
+                .into()
+        }
+    }
+
+    impl ToSchema for Duration {
+        fn name() -> Cow<'static, str> {
+            Cow::Borrowed("Duration")
+        }
+    }
+}

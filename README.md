@@ -169,6 +169,16 @@ prost-wkt-types = { version = "0.6", features = ["schemars"] }
 
 This will derive the [JsonSchema](https://docs.rs/schemars/latest/schemars/trait.JsonSchema.html) trait for the types in this crate so they can be used to generate JSON schema files.
 
+## Utoipa ##
+This crate is compatible with [utoipa](https://github.com/juhaku/utoipa) if the feature `utoipa` is enabled:
+
+```toml
+[dependencies]
+prost-wkt-types = { version = "0.7", features = ["utoipa"] }
+```
+
+This will implement the [PartialSchema](https://docs.rs/utoipa/latest/utoipa/trait.PartialSchema.html) and [ToSchema](https://docs.rs/utoipa/latest/utoipa/trait.ToSchema.html) traits for the types in this crate so they can be used in an OpenAPI document without a per-field `#[schema(value_type = ...)]` override.
+
 ## Known Problems ##
 
 ### oneOf types ###

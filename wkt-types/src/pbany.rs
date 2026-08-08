@@ -214,6 +214,47 @@ mod schemars_impl {
     }
 }
 
+#[cfg(feature = "utoipa")]
+mod utoipa_impl {
+    use super::Any;
+    use serde_json::json;
+    use std::borrow::Cow;
+    use utoipa::openapi::schema::{ObjectBuilder, SchemaType, Type};
+    use utoipa::openapi::{RefOr, Schema};
+    use utoipa::{PartialSchema, ToSchema};
+
+    impl PartialSchema for Any {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(SchemaType::Type(Type::Object))
+                .description(Some(
+                    "Represents a dynamically typed protocol buffer message",
+                ))
+                .property(
+                    "@type",
+                    ObjectBuilder::new().schema_type(SchemaType::Type(Type::String)),
+                )
+                .required("@type")
+                .property(
+                    "value",
+                    ObjectBuilder::new().schema_type(SchemaType::Type(Type::String)),
+                )
+                .required("value")
+                .examples([json!({
+                    "@type": "type.googleapis.com/google.protobuf.Duration",
+                    "value": "1.5s",
+                })])
+                .into()
+        }
+    }
+
+    impl ToSchema for Any {
+        fn name() -> Cow<'static, str> {
+            Cow::Borrowed("Any")
+        }
+    }
+}
+
 /// URL/resource name that uniquely identifies the type of the serialized protocol buffer message,
 /// e.g. `type.googleapis.com/google.protobuf.Duration`.
 ///

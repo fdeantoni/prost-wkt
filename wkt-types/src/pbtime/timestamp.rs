@@ -336,3 +336,29 @@ mod schemars_impl {
         }
     }
 }
+
+#[cfg(feature = "utoipa")]
+mod utoipa_impl {
+    use super::Timestamp;
+    use std::borrow::Cow;
+    use utoipa::openapi::schema::{KnownFormat, ObjectBuilder, SchemaFormat, SchemaType, Type};
+    use utoipa::openapi::{RefOr, Schema};
+    use utoipa::{PartialSchema, ToSchema};
+
+    impl PartialSchema for Timestamp {
+        fn schema() -> RefOr<Schema> {
+            ObjectBuilder::new()
+                .schema_type(SchemaType::Type(Type::String))
+                .format(Some(SchemaFormat::KnownFormat(KnownFormat::DateTime)))
+                .description(Some("A timestamp in RFC 3339 format"))
+                .examples(["2025-04-11T12:00:00Z", "2025-04-11T12:00:00.123456789Z"])
+                .into()
+        }
+    }
+
+    impl ToSchema for Timestamp {
+        fn name() -> Cow<'static, str> {
+            Cow::Borrowed("Timestamp")
+        }
+    }
+}

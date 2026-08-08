@@ -169,6 +169,37 @@ prost-wkt-types = { version = "0.6", features = ["schemars"] }
 
 This will derive the [JsonSchema](https://docs.rs/schemars/latest/schemars/trait.JsonSchema.html) trait for the types in this crate so they can be used to generate JSON schema files.
 
+## Rkyv ##
+This crate is compatible with [rkyv](https://rkyv.org) 0.8 if the feature `rkyv` is enabled:
+
+```toml
+[dependencies]
+prost-wkt-types = { version = "0.6", features = ["rkyv"] }
+```
+
+This derives [Archive](https://docs.rs/rkyv/0.8/rkyv/trait.Archive.html),
+[Serialize](https://docs.rs/rkyv/0.8/rkyv/trait.Serialize.html) and
+[Deserialize](https://docs.rs/rkyv/0.8/rkyv/trait.Deserialize.html) on `Timestamp`,
+`Duration`, `Empty`, `FieldMask` and `Any`, so they can be used directly as fields of
+your own rkyv types — including the `Option<T>` shape `prost-build` generates for an
+`optional` message field:
+
+```rust
+#[derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)]
+struct Event {
+    name: String,
+    at: Option<prost_wkt_types::Timestamp>,
+}
+```
+
+Without the feature the orphan rule leaves downstream crates no option but to mirror
+each type locally with `#[rkyv(remote = ...)]`.
+
+`Struct`, `Value` and `ListValue` are not covered. They are mutually recursive through
+`HashMap` and `Vec`, so their trait bounds only resolve with `#[rkyv(omit_bounds)]` on
+the recursive field, and `prost-build` cannot place an attribute on a field of a oneof
+variant. Use `Any` or your own type if you need to archive dynamic JSON.
+
 ## Known Problems ##
 
 ### oneOf types ###

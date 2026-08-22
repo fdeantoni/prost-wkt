@@ -18,6 +18,20 @@ fn main() {
     build(&dir, "pbmask");
 }
 
+/// Types whose generated definition carries the rkyv derives. `Struct`, `Value` and
+/// `ListValue` are absent: they form a cycle through `HashMap`/`Vec`, which rkyv can
+/// only break with `#[rkyv(omit_bounds)]` on the recursive *field*, and prost-build
+/// can only attach an attribute to a oneof *variant*.
+const RKYV_TYPES: &[&str] = &[
+    "google.protobuf.Timestamp",
+    "google.protobuf.Duration",
+    "google.protobuf.Empty",
+    "google.protobuf.FieldMask",
+    "google.protobuf.Any",
+];
+
+const RKYV_DERIVE: &str = "#[cfg_attr(feature = \"rkyv\", derive(::rkyv::Archive, ::rkyv::Serialize, ::rkyv::Deserialize))]";
+
 fn build(dir: &Path, proto: &str) {
     let out = dir.join(proto);
     create_dir_all(&out).unwrap();
@@ -41,7 +55,13 @@ fn build(dir: &Path, proto: &str) {
         .type_attribute(
             "google.protobuf.FieldMask",
             "#[derive(serde_derive::Serialize, serde_derive::Deserialize)]",
-        )
+        );
+
+    for path in RKYV_TYPES {
+        prost_build.type_attribute(path, RKYV_DERIVE);
+    }
+
+    prost_build
         .file_descriptor_set_path(&descriptor_file)
         .out_dir(&out)
         .compile_protos(&[source], &["proto/".to_string()])

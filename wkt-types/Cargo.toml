@@ -3,7 +3,9 @@ name = "prost-wkt-types"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
-license.workspace = true
+# Overrides the workspace Apache-2.0: this crate redistributes the BSD-3-Clause
+# schemas under proto/google/protobuf/.
+license = "Apache-2.0 AND BSD-3-Clause"
 repository.workspace = true
 description.workspace = true
 readme.workspace = true

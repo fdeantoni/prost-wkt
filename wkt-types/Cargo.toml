@@ -15,11 +15,18 @@ rust-version.workspace = true
 [lib]
 doctest = false
 
+[package.metadata.docs.rs]
+# Build the docs with the schema features on so their trait impls are visible.
+features = ["schemars", "utoipa"]
+
 [features]
 default = ["std"]
 std = []
 vendored-protoc = ["protobuf-src"]
 vendored-protox = ["protox"]
+# Schema support for the well-known types; see the README.
+schemars = ["dep:schemars"]
+utoipa = ["dep:utoipa"]
 
 [dependencies]
 prost-wkt.workspace = true
@@ -29,7 +36,12 @@ serde_json.workspace = true
 serde_derive.workspace = true
 chrono.workspace = true
 schemars = { version = "1.2.0", optional = true }
+# utoipa's default `macros` feature is load-bearing: utoipa 5.5 does not compile with
+# `default-features = false` (its builder code references macros-gated modules).
 utoipa = { version = "5", optional = true }
+
+[dev-dependencies]
+regex = "1"
 
 [build-dependencies]
 prost.workspace = true

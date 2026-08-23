@@ -308,9 +308,17 @@ impl<'de> Deserialize<'de> for Timestamp {
     }
 }
 
+/// Schema description shared by the schemars and utoipa impls.
+#[cfg(any(feature = "schemars", feature = "utoipa"))]
+pub(crate) const TIMESTAMP_DESCRIPTION: &str = "A timestamp in RFC 3339 format";
+
+/// Schema examples shared by the schemars and utoipa impls.
+#[cfg(any(feature = "schemars", feature = "utoipa"))]
+pub(crate) const TIMESTAMP_EXAMPLES: [&str; 2] = ["2025-04-11T12:00:00Z", "2025-04-11T12:00:00.123456789Z"];
+
 #[cfg(feature = "schemars")]
 mod schemars_impl {
-    use super::Timestamp;
+    use super::{Timestamp, TIMESTAMP_DESCRIPTION, TIMESTAMP_EXAMPLES};
     use schemars::generate::SchemaGenerator;
     use schemars::{json_schema, JsonSchema, Schema};
     use std::borrow::Cow;
@@ -327,11 +335,8 @@ mod schemars_impl {
         fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
             json_schema!({
                 "type": "string",
-                "description": "A timestamp in RFC 3339 format",
-                "examples": [
-                    "2025-04-11T12:00:00Z",
-                    "2025-04-11T12:00:00.123456789Z",
-                ],
+                "description": TIMESTAMP_DESCRIPTION,
+                "examples": TIMESTAMP_EXAMPLES,
             })
         }
     }
@@ -339,9 +344,9 @@ mod schemars_impl {
 
 #[cfg(feature = "utoipa")]
 mod utoipa_impl {
-    use super::Timestamp;
+    use super::{Timestamp, TIMESTAMP_DESCRIPTION, TIMESTAMP_EXAMPLES};
     use std::borrow::Cow;
-    use utoipa::openapi::schema::{KnownFormat, ObjectBuilder, SchemaFormat, SchemaType, Type};
+    use utoipa::openapi::schema::{ObjectBuilder, SchemaType, Type};
     use utoipa::openapi::{RefOr, Schema};
     use utoipa::{PartialSchema, ToSchema};
 
@@ -349,16 +354,15 @@ mod utoipa_impl {
         fn schema() -> RefOr<Schema> {
             ObjectBuilder::new()
                 .schema_type(SchemaType::Type(Type::String))
-                .format(Some(SchemaFormat::KnownFormat(KnownFormat::DateTime)))
-                .description(Some("A timestamp in RFC 3339 format"))
-                .examples(["2025-04-11T12:00:00Z", "2025-04-11T12:00:00.123456789Z"])
+                .description(Some(TIMESTAMP_DESCRIPTION))
+                .examples(TIMESTAMP_EXAMPLES)
                 .into()
         }
     }
 
     impl ToSchema for Timestamp {
         fn name() -> Cow<'static, str> {
-            Cow::Borrowed("Timestamp")
+            Cow::Borrowed("google.protobuf.Timestamp")
         }
     }
 }

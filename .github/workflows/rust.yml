@@ -36,3 +36,8 @@ jobs:
         
       - name: execute test
         run: cargo test --workspace
+
+      # The schema features are off by default; exercise them explicitly so the
+      # feature-gated impls and their tests are compiled on every run.
+      - name: execute test (schema features)
+        run: cargo test -p prost-wkt-types --features schemars,utoipa

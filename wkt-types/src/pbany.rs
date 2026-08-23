@@ -178,9 +178,25 @@ impl<'de> Deserialize<'de> for Any {
     }
 }
 
+/// Schema description shared by the schemars and utoipa impls.
+#[cfg(any(feature = "schemars", feature = "utoipa"))]
+pub(crate) const ANY_DESCRIPTION: &str = "Represents a dynamically typed protocol buffer message. \
+    Serialized as a JSON object whose `@type` field holds the type URL. For ordinary messages \
+    the message's own fields are embedded alongside `@type`; well-known types with a special \
+    JSON form (such as `Duration` or `Timestamp`) carry it in a `value` field instead.";
+
+/// Example documents covering both serialized shapes of an [`Any`].
+#[cfg(any(feature = "schemars", feature = "utoipa"))]
+pub(crate) fn any_examples() -> Vec<serde_json::Value> {
+    vec![
+        serde_json::json!({ "@type": "type.googleapis.com/my.package.Foo", "name": "hello" }),
+        serde_json::json!({ "@type": "type.googleapis.com/google.protobuf.Duration", "value": "1.500000000s" }),
+    ]
+}
+
 #[cfg(feature = "schemars")]
 mod schemars_impl {
-    use super::Any;
+    use super::{any_examples, Any, ANY_DESCRIPTION};
     use schemars::generate::SchemaGenerator;
     use schemars::{json_schema, JsonSchema, Schema};
     use std::borrow::Cow;
@@ -195,20 +211,17 @@ mod schemars_impl {
         }
 
         fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
+            // Only `@type` is guaranteed: ordinary messages embed their own fields next to
+            // it, and `value` (when present) is not always a string. See `ANY_DESCRIPTION`.
             json_schema!({
                 "type": "object",
-                "description": "Represents a dynamically typed protocol buffer message",
-                "examples": [
-                    {
-                        "@type": "type.googleapis.com/google.protobuf.Duration",
-                        "value": "1.5s",
-                    }
-                ],
+                "description": ANY_DESCRIPTION,
+                "examples": any_examples(),
                 "properties": {
                     "@type": { "type": "string" },
-                    "value": { "type": "string" },
                 },
-                "required": ["@type", "value"],
+                "required": ["@type"],
+                "additionalProperties": true,
             })
         }
     }
@@ -216,41 +229,33 @@ mod schemars_impl {
 
 #[cfg(feature = "utoipa")]
 mod utoipa_impl {
-    use super::Any;
-    use serde_json::json;
+    use super::{any_examples, Any, ANY_DESCRIPTION};
     use std::borrow::Cow;
-    use utoipa::openapi::schema::{ObjectBuilder, SchemaType, Type};
+    use utoipa::openapi::schema::{AdditionalProperties, ObjectBuilder, SchemaType, Type};
     use utoipa::openapi::{RefOr, Schema};
     use utoipa::{PartialSchema, ToSchema};
 
     impl PartialSchema for Any {
         fn schema() -> RefOr<Schema> {
+            // Only `@type` is guaranteed: ordinary messages embed their own fields next to
+            // it, and `value` (when present) is not always a string. See `ANY_DESCRIPTION`.
             ObjectBuilder::new()
                 .schema_type(SchemaType::Type(Type::Object))
-                .description(Some(
-                    "Represents a dynamically typed protocol buffer message",
-                ))
+                .description(Some(ANY_DESCRIPTION))
                 .property(
                     "@type",
                     ObjectBuilder::new().schema_type(SchemaType::Type(Type::String)),
                 )
                 .required("@type")
-                .property(
-                    "value",
-                    ObjectBuilder::new().schema_type(SchemaType::Type(Type::String)),
-                )
-                .required("value")
-                .examples([json!({
-                    "@type": "type.googleapis.com/google.protobuf.Duration",
-                    "value": "1.5s",
-                })])
+                .additional_properties(Some(AdditionalProperties::FreeForm(true)))
+                .examples(any_examples())
                 .into()
         }
     }
 
     impl ToSchema for Any {
         fn name() -> Cow<'static, str> {
-            Cow::Borrowed("Any")
+            Cow::Borrowed("google.protobuf.Any")
         }
     }
 }
@@ -339,6 +344,18 @@ mod tests {
         }
     }
 
+    // Register `Foo` for `Any::try_unpack`, as `prost-wkt-build` does for generated
+    // messages; without this, serializing a packed `Foo` takes the fallback path.
+    ::prost_wkt::inventory::submit! {
+        ::prost_wkt::MessageSerdeDecoderEntry {
+            type_url: "type.googleapis.com/any.test.Foo",
+            decoder: |buf: &[u8]| {
+                let msg: Foo = ::prost::Message::decode(buf)?;
+                Ok(Box::new(msg))
+            }
+        }
+    }
+
     #[test]
     fn pack_unpack_test() {
         let msg = Foo {
@@ -390,5 +407,87 @@ mod tests {
 
         // Wrong type URL
         assert!(any.to_msg::<crate::Duration>().is_err());
+    }
+    /// The three shapes `Serialize for Any` actually produces. Any schema for `Any` must
+    /// accept all of them.
+    #[cfg(any(feature = "schemars", feature = "utoipa"))]
+    fn serialized_any_shapes() -> Vec<serde_json::Value> {
+        let packed = Any::try_pack(Foo {
+            string: "hi".to_string(),
+        })
+        .unwrap();
+        let wkt = Any::from_msg(&crate::Duration {
+            seconds: 1,
+            nanos: 500_000_000,
+        })
+        .unwrap();
+        let unregistered = Any {
+            type_url: "type.googleapis.com/unknown.Type".to_string(),
+            value: vec![8, 1],
+        };
+        vec![
+            serde_json::to_value(&packed).unwrap(),
+            serde_json::to_value(&wkt).unwrap(),
+            serde_json::to_value(&unregistered).unwrap(),
+        ]
+    }
+
+    #[cfg(any(feature = "schemars", feature = "utoipa"))]
+    fn assert_matches_any_schema(schema: &serde_json::Value) {
+        assert_eq!(schema["type"], "object");
+        assert_eq!(schema["required"], json!(["@type"]));
+        assert_eq!(schema["properties"]["@type"]["type"], "string");
+        assert!(
+            schema["properties"].get("value").is_none(),
+            "`value` must not be declared: it is absent for ordinary messages and untyped otherwise"
+        );
+        assert_eq!(schema["additionalProperties"], true);
+        assert_eq!(schema["examples"], json!(any_examples()));
+
+        let required: Vec<&str> = schema["required"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|k| k.as_str().unwrap())
+            .collect();
+        for doc in serialized_any_shapes() {
+            let obj = doc.as_object().expect("Any serializes as a JSON object");
+            for key in &required {
+                assert!(obj.contains_key(*key), "{doc} lacks required key {key:?}");
+            }
+            assert!(obj["@type"].is_string(), "{doc}: @type must be a string");
+        }
+    }
+
+    /// Documents why the schema is shaped the way it is.
+    #[cfg(any(feature = "schemars", feature = "utoipa"))]
+    #[test]
+    fn any_serialized_shapes() {
+        let shapes = serialized_any_shapes();
+        // Ordinary message: fields embedded, no `value`.
+        assert_eq!(shapes[0]["@type"], "type.googleapis.com/any.test.Foo");
+        assert_eq!(shapes[0]["string"], "hi");
+        assert!(shapes[0].get("value").is_none());
+        // Special-JSON well-known type: `value` holds its JSON form.
+        assert_eq!(shapes[1]["@type"], "type.googleapis.com/google.protobuf.Duration");
+        assert_eq!(shapes[1]["value"], "1.500000000s");
+        // Unregistered type URL: raw bytes, which serialize as an integer array.
+        assert!(shapes[2]["value"].is_array());
+    }
+
+    #[cfg(feature = "utoipa")]
+    #[test]
+    fn utoipa_any_schema() {
+        use utoipa::{PartialSchema, ToSchema};
+        let schema = serde_json::to_value(Any::schema()).unwrap();
+        assert_matches_any_schema(&schema);
+        assert_eq!(Any::name(), "google.protobuf.Any");
+    }
+
+    #[cfg(feature = "schemars")]
+    #[test]
+    fn schemars_any_schema() {
+        let schema = serde_json::to_value(schemars::schema_for!(Any)).unwrap();
+        assert_matches_any_schema(&schema);
     }
 }

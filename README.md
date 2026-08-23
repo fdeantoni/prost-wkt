@@ -164,20 +164,25 @@ This crate is compatible with [schemars](https://github.com/GREsau/schemars) if 
 
 ```toml
 [dependencies]
-prost-wkt-types = { version = "0.6", features = ["schemars"] }
+prost-wkt-types = { version = "0.7", features = ["schemars"] }
 ```
 
-This will derive the [JsonSchema](https://docs.rs/schemars/latest/schemars/trait.JsonSchema.html) trait for the types in this crate so they can be used to generate JSON schema files.
+This implements the [JsonSchema](https://docs.rs/schemars/latest/schemars/trait.JsonSchema.html) trait for `Timestamp`, `Duration`, `Any` and `Empty` so they can be used to generate JSON schema files. `Struct`, `Value`, `ListValue` and `FieldMask` are not covered.
 
 ## Utoipa ##
-This crate is compatible with [utoipa](https://github.com/juhaku/utoipa) if the feature `utoipa` is enabled:
+This crate is compatible with [utoipa](https://github.com/juhaku/utoipa) 5.x if the feature `utoipa` is enabled:
 
 ```toml
 [dependencies]
 prost-wkt-types = { version = "0.7", features = ["utoipa"] }
 ```
 
-This will implement the [PartialSchema](https://docs.rs/utoipa/latest/utoipa/trait.PartialSchema.html) and [ToSchema](https://docs.rs/utoipa/latest/utoipa/trait.ToSchema.html) traits for the types in this crate so they can be used in an OpenAPI document without a per-field `#[schema(value_type = ...)]` override.
+This implements the [PartialSchema](https://docs.rs/utoipa/latest/utoipa/trait.PartialSchema.html) and [ToSchema](https://docs.rs/utoipa/latest/utoipa/trait.ToSchema.html) traits for `Timestamp`, `Duration`, `Any` and `Empty`, so they can be used as fields of your own `#[derive(ToSchema)]` types without a per-field `#[schema(value_type = ...)]` override. They are registered under the component names `google.protobuf.Timestamp`, `google.protobuf.Duration`, `google.protobuf.Any` and `google.protobuf.Empty`. `Struct`, `Value`, `ListValue` and `FieldMask` are not covered and still need a `value_type` override.
+
+Known limitations:
+
+* If any crate in your dependency graph enables utoipa's `chrono`, `time` or `jiff` feature, utoipa's derive treats fields whose type is *named* `Duration` or `Timestamp` as chrono-style primitives and bypasses these impls. Add a `#[schema(value_type = ...)]` override on the affected field in that case.
+* `#[utoipa::path]` only registers schemas referenced from request bodies and responses. A type used only through `IntoParams` (query or path parameters) must be added to `components(schemas(...))` explicitly.
 
 ## Known Problems ##
 

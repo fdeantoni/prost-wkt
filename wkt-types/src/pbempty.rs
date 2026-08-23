@@ -8,9 +8,13 @@ impl From<()> for Empty {
     }
 }
 
+/// Schema description shared by the schemars and utoipa impls.
+#[cfg(any(feature = "schemars", feature = "utoipa"))]
+pub(crate) const EMPTY_DESCRIPTION: &str = "Represents an empty message";
+
 #[cfg(feature = "schemars")]
 mod schemars_impl {
-    use super::Empty;
+    use super::{Empty, EMPTY_DESCRIPTION};
     use schemars::generate::SchemaGenerator;
     use schemars::{json_schema, JsonSchema, Schema};
     use std::borrow::Cow;
@@ -27,7 +31,7 @@ mod schemars_impl {
         fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
             json_schema!({
                 "type": "object",
-                "description": "Represents an empty message",
+                "description": EMPTY_DESCRIPTION,
             })
         }
     }
@@ -35,7 +39,7 @@ mod schemars_impl {
 
 #[cfg(feature = "utoipa")]
 mod utoipa_impl {
-    use super::Empty;
+    use super::{Empty, EMPTY_DESCRIPTION};
     use std::borrow::Cow;
     use utoipa::openapi::schema::{ObjectBuilder, SchemaType, Type};
     use utoipa::openapi::{RefOr, Schema};
@@ -45,7 +49,7 @@ mod utoipa_impl {
         fn schema() -> RefOr<Schema> {
             ObjectBuilder::new()
                 .schema_type(SchemaType::Type(Type::Object))
-                .description(Some("Represents an empty message"))
+                .description(Some(EMPTY_DESCRIPTION))
                 .into()
         }
     }
@@ -94,6 +98,7 @@ mod utoipa_tests {
     fn utoipa_empty_schema() {
         let schema = serde_json::to_value(Empty::schema()).expect("json");
         assert_eq!(schema["type"], "object");
+        assert_eq!(schema["description"], super::EMPTY_DESCRIPTION);
         assert_eq!(Empty::name(), "google.protobuf.Empty");
     }
 }

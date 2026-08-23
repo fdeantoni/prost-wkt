@@ -114,6 +114,8 @@ mod tests {
         // No `format`: OpenAPI `date-time` asserts strict RFC 3339, which the
         // serializer does not guarantee for out-of-range years.
         assert!(schema.get("format").is_none());
+        assert_eq!(schema["description"], timestamp::TIMESTAMP_DESCRIPTION);
+        assert_eq!(schema["examples"], serde_json::json!(timestamp::TIMESTAMP_EXAMPLES));
         assert_eq!(Timestamp::name(), "google.protobuf.Timestamp");
     }
 
@@ -128,6 +130,8 @@ mod tests {
         // protobuf `1.5s` form this crate emits.
         assert!(schema.get("format").is_none());
         assert_eq!(schema["pattern"], duration::DURATION_PATTERN);
+        assert_eq!(schema["description"], duration::DURATION_DESCRIPTION);
+        assert_eq!(schema["examples"], serde_json::json!(duration::DURATION_EXAMPLES));
         assert_eq!(Duration::name(), "google.protobuf.Duration");
     }
 

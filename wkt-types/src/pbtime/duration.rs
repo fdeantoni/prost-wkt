@@ -331,7 +331,7 @@ mod utoipa_impl {
 
     impl ToSchema for Duration {
         fn name() -> Cow<'static, str> {
-            Cow::Borrowed("Duration")
+            Cow::Borrowed("google.protobuf.Duration")
         }
     }
 }

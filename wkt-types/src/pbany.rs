@@ -255,7 +255,7 @@ mod utoipa_impl {
 
     impl ToSchema for Any {
         fn name() -> Cow<'static, str> {
-            Cow::Borrowed("Any")
+            Cow::Borrowed("google.protobuf.Any")
         }
     }
 }
@@ -481,7 +481,7 @@ mod tests {
         use utoipa::{PartialSchema, ToSchema};
         let schema = serde_json::to_value(Any::schema()).unwrap();
         assert_matches_any_schema(&schema);
-        assert_eq!(Any::name(), "Any");
+        assert_eq!(Any::name(), "google.protobuf.Any");
     }
 
     #[cfg(feature = "schemars")]

@@ -357,7 +357,7 @@ mod utoipa_impl {
 
     impl ToSchema for Timestamp {
         fn name() -> Cow<'static, str> {
-            Cow::Borrowed("Timestamp")
+            Cow::Borrowed("google.protobuf.Timestamp")
         }
     }
 }

@@ -52,7 +52,7 @@ mod utoipa_impl {
 
     impl ToSchema for Empty {
         fn name() -> Cow<'static, str> {
-            Cow::Borrowed("Empty")
+            Cow::Borrowed("google.protobuf.Empty")
         }
     }
 }
@@ -82,5 +82,18 @@ mod tests {
     fn convert_unit() {
         let msg: Empty = ().into();
         assert_eq!(msg, Empty {});
+    }
+}
+
+#[cfg(all(test, feature = "utoipa"))]
+mod utoipa_tests {
+    use super::Empty;
+    use utoipa::{PartialSchema, ToSchema};
+
+    #[test]
+    fn utoipa_empty_schema() {
+        let schema = serde_json::to_value(Empty::schema()).expect("json");
+        assert_eq!(schema["type"], "object");
+        assert_eq!(Empty::name(), "google.protobuf.Empty");
     }
 }

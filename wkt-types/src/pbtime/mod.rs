@@ -111,7 +111,9 @@ mod tests {
 
         let schema = serde_json::to_value(Timestamp::schema()).expect("json");
         assert_eq!(schema["type"], "string");
-        assert_eq!(schema["format"], "date-time");
+        // No `format`: OpenAPI `date-time` asserts strict RFC 3339, which the
+        // serializer does not guarantee for out-of-range years.
+        assert!(schema.get("format").is_none());
         assert_eq!(Timestamp::name(), "Timestamp");
     }
 
@@ -122,8 +124,31 @@ mod tests {
 
         let schema = serde_json::to_value(Duration::schema()).expect("json");
         assert_eq!(schema["type"], "string");
-        assert_eq!(schema["format"], "duration");
-        assert_eq!(schema["pattern"], r"^\d+(\.\d{1,9})?s$");
+        // No `format`: OpenAPI `duration` means ISO-8601 (`PT1.5S`), not the
+        // protobuf `1.5s` form this crate emits.
+        assert!(schema.get("format").is_none());
+        assert_eq!(schema["pattern"], duration::DURATION_PATTERN);
         assert_eq!(Duration::name(), "Duration");
+    }
+
+    /// The advertised pattern must accept everything the serializer actually emits —
+    /// in particular negative durations, which the original pattern rejected.
+    #[cfg(any(feature = "schemars", feature = "utoipa"))]
+    #[test]
+    fn duration_pattern_matches_serialized_output() {
+        let re = regex::Regex::new(duration::DURATION_PATTERN).expect("valid regex");
+        let cases = [
+            Duration { seconds: 0, nanos: 0 },
+            Duration { seconds: 1, nanos: 500_000_000 },
+            Duration { seconds: -1, nanos: -500_000_000 },
+            Duration { seconds: 0, nanos: -1 },
+            Duration { seconds: 315_576_000_000, nanos: 999_999_999 },
+            Duration { seconds: -315_576_000_000, nanos: -999_999_999 },
+        ];
+        for d in cases {
+            let json = serde_json::to_string(&d).expect("serialize");
+            let s = json.trim_matches('"');
+            assert!(re.is_match(s), "{s:?} does not match {}", duration::DURATION_PATTERN);
+        }
     }
 }

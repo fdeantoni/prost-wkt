@@ -270,9 +270,16 @@ impl<'de> Deserialize<'de> for Duration {
     }
 }
 
+/// Regex for the protobuf JSON form of a [`Duration`]: optional sign, integer seconds,
+/// up to nine fractional digits, trailing `s`. Durations are signed and the serializer
+/// emits e.g. `-1.500000000s`, so the sign must be allowed. Shared by the schemars and
+/// utoipa schemas so the two can never disagree.
+#[cfg(any(feature = "schemars", feature = "utoipa"))]
+pub(crate) const DURATION_PATTERN: &str = r"^-?\d+(\.\d{1,9})?s$";
+
 #[cfg(feature = "schemars")]
 mod schemars_impl {
-    use super::Duration;
+    use super::{Duration, DURATION_PATTERN};
     use schemars::generate::SchemaGenerator;
     use schemars::{json_schema, JsonSchema, Schema};
     use std::borrow::Cow;
@@ -291,11 +298,11 @@ mod schemars_impl {
                 "type": "string",
                 "description": "A duration in seconds with up to nine fractional digits, ending with 's'",
                 "examples": [
-                    "1s",
-                    "1.5s",
+                    "1.500000000s",
+                    "-1.500000000s",
                     "1.000000001s",
                 ],
-                "pattern": r"^\d+(\.\d{1,9})?s$",
+                "pattern": DURATION_PATTERN,
             })
         }
     }
@@ -303,9 +310,9 @@ mod schemars_impl {
 
 #[cfg(feature = "utoipa")]
 mod utoipa_impl {
-    use super::Duration;
+    use super::{Duration, DURATION_PATTERN};
     use std::borrow::Cow;
-    use utoipa::openapi::schema::{KnownFormat, ObjectBuilder, SchemaFormat, SchemaType, Type};
+    use utoipa::openapi::schema::{ObjectBuilder, SchemaType, Type};
     use utoipa::openapi::{RefOr, Schema};
     use utoipa::{PartialSchema, ToSchema};
 
@@ -313,12 +320,11 @@ mod utoipa_impl {
         fn schema() -> RefOr<Schema> {
             ObjectBuilder::new()
                 .schema_type(SchemaType::Type(Type::String))
-                .format(Some(SchemaFormat::KnownFormat(KnownFormat::Duration)))
                 .description(Some(
                     "A duration in seconds with up to nine fractional digits, ending with 's'",
                 ))
-                .examples(["1s", "1.5s", "1.000000001s"])
-                .pattern(Some(r"^\d+(\.\d{1,9})?s$"))
+                .examples(["1.500000000s", "-1.500000000s", "1.000000001s"])
+                .pattern(Some(DURATION_PATTERN))
                 .into()
         }
     }

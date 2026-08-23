@@ -1,3 +1,19 @@
+# Release 0.7.2
+
+## What's Changed
+* Raise the minimum Rust version to `1.85` by @LucaCappelletti94 in https://github.com/fdeantoni/prost-wkt/pull/87
+* Ship the imported `google.protobuf` schemas by @LucaCappelletti94 in https://github.com/fdeantoni/prost-wkt/pull/86
+* Add utoipa feature to prost-wkt-types by @AlJohri in https://github.com/fdeantoni/prost-wkt/pull/88
+* Corrected the schemars and utoipa schemas: `Duration` accepts negative values and no longer claims `format: duration`, `Timestamp` no longer claims `format: date-time`, and `Any` only requires `@type`. utoipa components are registered as `google.protobuf.*`.
+* The `schemars` and `utoipa` features are now built and tested in CI and enabled on docs.rs
+
+## Notes
+* `prost-wkt-types` now vendors the `google.protobuf` well-known type schemas (protobuf v35.1), so the generated code no longer depends on the installed `protoc` or on `protox`. These files are BSD-3-Clause, so the crate's license expression is now `Apache-2.0 AND BSD-3-Clause`.
+* The minimum supported Rust version is now 1.85.
+
+**Full Changelog**: https://github.com/fdeantoni/prost-wkt/compare/v0.7.1...v0.7.2
+
+
 # Release 0.7.1
 
 ## What's Changed

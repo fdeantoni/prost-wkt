@@ -103,4 +103,27 @@ mod tests {
         assert_eq!(duration.seconds, 10);
         assert_eq!(duration.nanos, 100);
     }
+
+    #[cfg(feature = "utoipa")]
+    #[test]
+    fn utoipa_timestamp_schema() {
+        use utoipa::{PartialSchema, ToSchema};
+
+        let schema = serde_json::to_value(Timestamp::schema()).expect("json");
+        assert_eq!(schema["type"], "string");
+        assert_eq!(schema["format"], "date-time");
+        assert_eq!(Timestamp::name(), "Timestamp");
+    }
+
+    #[cfg(feature = "utoipa")]
+    #[test]
+    fn utoipa_duration_schema() {
+        use utoipa::{PartialSchema, ToSchema};
+
+        let schema = serde_json::to_value(Duration::schema()).expect("json");
+        assert_eq!(schema["type"], "string");
+        assert_eq!(schema["format"], "duration");
+        assert_eq!(schema["pattern"], r"^\d+(\.\d{1,9})?s$");
+        assert_eq!(Duration::name(), "Duration");
+    }
 }

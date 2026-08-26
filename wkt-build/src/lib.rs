@@ -11,6 +11,7 @@ use prost_build::Module;
 
 pub struct SerdeOptions {
     type_url_generator: Box<dyn Fn(&str, &str) -> String + 'static>,
+    type_attributes: Vec<(String, String)>,
 }
 
 pub fn add_serde(out: PathBuf, descriptor: FileDescriptorSet) {
@@ -43,7 +44,13 @@ pub fn add_serde_with_options(out: PathBuf, descriptor: FileDescriptorSet, optio
 
             let type_url = (options.type_url_generator)(package_name, message_name);
 
-            gen_trait_impl(&mut rust_file, package_name, message_name, &type_url);
+            gen_trait_impl(
+                &mut rust_file,
+                package_name,
+                message_name,
+                &type_url,
+                &options.type_attributes,
+            );
         }
     }
 }
@@ -51,9 +58,22 @@ pub fn add_serde_with_options(out: PathBuf, descriptor: FileDescriptorSet, optio
 // This method uses the `heck` crate (the same that prost uses) to properly format the message name
 // to UpperCamelCase as the prost_build::ident::{to_snake, to_upper_camel} methods
 // in the `ident` module of prost_build is private.
-fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, type_url: &str) {
+fn gen_trait_impl(
+    rust_file: &mut File,
+    package_name: &str,
+    message_name: &str,
+    type_url: &str,
+    type_attributes: &[(String, String)],
+) {
     let type_name = message_name.to_upper_camel_case();
     let type_name = format_ident!("{}", type_name);
+    let dotted_path = format!(".{}.{}", package_name, message_name);
+    let bare_path = format!("{}.{}", package_name, message_name);
+    let custom_attributes: Vec<&str> = type_attributes
+        .iter()
+        .filter(|(path, _)| *path == dotted_path || *path == bare_path)
+        .map(|(_, attribute)| attribute.as_str())
+        .collect();
 
     let tokens = quote! {
         #[allow(dead_code)]
@@ -104,6 +124,9 @@ fn gen_trait_impl(rust_file: &mut File, package_name: &str, message_name: &str, 
         };
     };
 
+    for attr in &custom_attributes {
+        writeln!(rust_file, "{}", attr).unwrap();
+    }
     writeln!(rust_file).unwrap();
     writeln!(rust_file, "{}", &tokens).unwrap();
 }
@@ -114,11 +137,37 @@ impl Default for SerdeOptions {
             type_url_generator: Box::new(|package, message| {
                 format!("type.googleapis.com/{}.{}", package, message)
             }),
+            type_attributes: Vec::new(),
         }
     }
 }
 
 impl SerdeOptions {
+    /// Add a custom attribute to the `MessageSerde` impl generated for the given type.
+    ///
+    /// The `path` is the fully-qualified protobuf type path, with or without a leading
+    /// dot (e.g. `google.protobuf.Timestamp` or `.google.protobuf.Timestamp`). The
+    /// `attribute` is inserted verbatim before the generated impl block.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # use prost_wkt_build::SerdeOptions;
+    /// let options = SerdeOptions::default()
+    ///     .type_attribute("google.protobuf.Timestamp", "#[allow(dead_code)]");
+    /// # let _ = options;
+    /// ```
+    pub fn type_attribute(
+        mut self,
+        path: impl AsRef<str>,
+        attribute: impl AsRef<str>,
+    ) -> Self {
+        self
+            .type_attributes
+            .push((path.as_ref().to_string(), attribute.as_ref().to_string()));
+        self
+    }
+
     /// Set a custom type url generator.
     ///
     /// The generator is a function that takes a package name and a message name and returns a type url.
